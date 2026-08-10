@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Drama Engine — AI Animation & Video Production Suite</title>
+  
+  <!-- Google Fonts: Inter, Outfit, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main NLE Grading Suite Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Hidden File Input Pickers -->
+  <input type="file" id="asset-file-input" multiple accept="video/*,image/*,audio/*" style="display: none;">
+  <input type="file" id="project-file-input" accept=".json" style="display: none;">
+  <input type="file" id="srt-file-input" accept=".srt,.txt,.vtt" style="display: none;">
+
+  <!-- Master Layout Grid Container -->
+  <div class="nle-container">
+
+    <!-- 1. Header Toolbar -->
+    <header class="nle-header">
+      <div class="header-left">
+        <span class="logo-icon">🎬</span>
+        <h1 class="brand-title">OPEN DRAMA ENGINE</h1>
+        <span class="suite-badge">v1.0</span>
+        <div class="engine-status-pill" id="engine-status-pill" title="Local Wan2GP Engine Status (http://127.0.0.1:7860)">
+          <span class="status-dot online">●</span>
+          <span id="engine-status-text">CLOUD ENGINE: HUGGINGFACE</span>
+        </div>
+        <div class="privacy-mode-capsule" title="Toggle Privacy Mode (Run Locally vs. Cloud HuggingFace Inference API)">
+          <label class="privacy-switch">
+            <input type="checkbox" id="privacy-mode-toggle">
+            <span class="privacy-slider"></span>
+          </label>
+          <span id="privacy-toggle-label" class="privacy-label">Privacy Mode (Run Locally)</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="header-center-tools">
+          <button class="icon-btn-header" id="btn-undo" title="Undo (Ctrl+Z)">↺</button>
+          <button class="icon-btn-header" id="btn-redo" title="Redo (Ctrl+Y)">↻</button>
+          <span class="header-tool-divider">|</span>
+          <div class="sequence-capsule">
+            <span class="cap-label">PROJECT:</span>
+            <input type="text" id="project-name-input" class="header-name-input" value="Scene_01_Intro" title="Click to rename project">
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="nle-header-btn" id="btn-open-script-modal" title="AI Script Assistant & Shot List Auto-Generator">✨ Script Assistant</button>
+        <button class="nle-header-btn" id="btn-open-proj" title="Open Local JSON Project File">Open Project</button>
+        <button class="nle-header-btn" id="btn-save-proj" title="Export Project State to JSON">Save Project</button>
+        <button class="btn-metallic-render" id="btn-export" title="Compile and Export Final Timeline Sequence (.mp4)">📤 Export</button>
+      </div>
+    </header>
+
+    <!-- 2. Main Workspace Layout (Rail + Resizable Sidebars) -->
+    <main class="nle-body" id="nle-body">
+      
+      <!-- Far-Left Vertical Icon Rail -->
+      <nav class="nav-rail" id="nav-rail">
+        <button class="rail-btn active" data-panel="media" title="Media Library">
+          <span class="rail-icon">📁</span>
+          <span class="rail-label">Media</span>
+        </button>
+        <button class="rail-btn" data-panel="prompts" title="AI Scene Prompts">
+          <span class="rail-icon">🎨</span>
+          <span class="rail-label">Prompts</span>
+        </button>
+        <button class="rail-btn" data-panel="captions" title="Auto Captions">
+          <span class="rail-icon">💬</span>
+          <span class="rail-label">Captions</span>
+        </button>
+        <button class="rail-btn" data-panel="audio" title="Audio & Music">
+          <span class="rail-icon">🎵</span>
+          <span class="rail-label">Audio</span>
+        </button>
+        <button class="rail-btn" data-panel="effects" title="Video Effects">
+          <span class="rail-icon">✨</span>
+          <span class="rail-label">Effects</span>
+        </button>
+        <button class="rail-btn" data-panel="plugins" title="Wan2GP Plugins">
+          <span class="rail-icon">🧩</span>
+          <span class="rail-label">Plugins</span>
+        </button>
+      </nav>
+
+      <!-- Expandable Asset & Tools Drawer Panel -->
+      <aside class="panel panel-assets" id="panel-assets">
+        <div class="panel-header">
+          <span class="panel-title" id="drawer-title">MEDIA LIBRARY</span>
+          <div class="panel-header-actions">
+            <button id="btn-new-folder" class="icon-btn" title="New Bin Folder">📁</button>
+            <button id="btn-global-vis" class="icon-btn" title="Toggle Global Visibility">👁️</button>
+            <button id="btn-toggle-left-panel" class="icon-btn collapse-arrow" title="Collapse/Expand Drawer">◀</button>
+          </div>
+        </div>
+
+        <div class="drawer-content-container">
+          <!-- MEDIA TAB CONTENT -->
+          <div id="drawer-sec-media" class="drawer-section">
+            <div class="asset-actions">
+              <button class="btn-metallic-wide" id="btn-import-top">+ Import Assets</button>
+            </div>
+
+            <div class="group-header">
+              <span id="asset-group-title">Imported Clips (3)</span>
+              <div class="group-icons">
+                <span class="icon-btn">⋮</span>
+              </div>
+            </div>
+
+            <div class="asset-list" id="asset-list">
+              <div class="asset-item active" data-type="video" data-name="Shot_01_BG.mp4" data-url="scifi_city_preview.jpg">
+                <div class="asset-thumb">
+                  <img src="scifi_city_preview.jpg" alt="Shot_01_BG.mp4">
+                </div>
+                <span class="asset-name">Shot_01_BG.mp4</span>
+                <button class="asset-delete-btn" title="Delete Asset">🗑️</button>
+              </div>
+
+              <div class="asset-item" data-type="image" data-name="Hero_Character.png" data-url="scifi_city_preview.jpg">
+                <div class="asset-thumb">
+                  <img src="scifi_city_preview.jpg" alt="Hero_Character.png">
+                </div>
+                <span class="asset-name">Hero_Character.png</span>
+                <button class="asset-delete-btn" title="Delete Asset">🗑️</button>
+              </div>
+
+              <div class="asset-item" data-type="audio" data-name="Cyber_BGM.wav">
+                <div class="asset-badge audio">📊</div>
+                <span class="asset-name">Cyber_BGM.wav</span>
+                <button class="asset-delete-btn" title="Delete Asset">🗑️</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PROMPTS TAB CONTENT (Iterative Sandbox Controls & AI Script Assistant) -->
+          <div id="drawer-sec-prompts" class="drawer-section hidden">
+            <div class="drawer-padding">
+              <button class="nle-header-btn wide-btn" id="btn-open-script-assistant-drawer" style="margin-bottom: 12px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; width: 100%; padding: 8px; font-weight: 700;">✨ Open AI Script Assistant</button>
+
+              <div class="field-group">
+                <div class="field-label-row">
+                  <label class="field-label">Scene Prompt (AI Generation)</label>
+                  <button id="btn-drawer-ai-idea" class="btn-ai-sparkle" title="Generate Creative Scene Idea">✨ Idea</button>
+                </div>
+                <div class="prompt-wrapper">
+                  <textarea class="field-textarea" id="drawer-inspect-prompt" rows="3" placeholder="Describe scene prompts...">2D animated anime style, close up shot of a cybernetic hero character speaking in a neon lit futuristic city</textarea>
+                </div>
+              </div>
+
+              <!-- Iterative Shot Action Bar -->
+              <div class="prompt-action-bar" id="drawer-prompt-action-bar">
+                <button class="btn-metallic-wide" id="btn-drawer-generate-shot">🎬 Generate Shot</button>
+                <div class="post-gen-row hidden" id="drawer-post-gen-row">
+                  <button class="nle-header-btn" id="btn-drawer-regenerate">↺ Regenerate</button>
+                  <button class="btn-metallic-wide" id="btn-drawer-add-timeline">➕ Add to Timeline</button>
+                </div>
+              </div>
+
+              <div class="field-group" style="margin-top: 10px;">
+                <label class="field-label">Negative Prompt</label>
+                <input type="text" class="field-input" id="drawer-inspect-neg-prompt" value="blurry, distorted, low quality, noise, watermark">
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">AI Render Model</label>
+                <select class="field-select" id="drawer-ai-model">
+                  <option value="wan2.1">Wan 2.1 14B (Default)</option>
+                  <option value="wan2.1-t2v">Wan 2.1 T2V (1.3B)</option>
+                  <option value="ltx-video">LTX Video v0.9</option>
+                  <option value="hunyuan">Hunyuan Video AI</option>
+                </select>
+              </div>
+
+              <!-- AUTOMATED SHOT LIST SECTION -->
+              <div class="shot-list-header-row" id="shot-list-header-row" style="margin-top: 14px;">
+                <span class="field-label">AUTOMATED SHOT LIST</span>
+                <button class="btn-metallic-wide" id="btn-generate-all-shots" style="padding: 3px 8px; font-size: 0.7rem;" title="Batch Queue Render All Shots to Timeline">⚡ Generate All Shots</button>
+              </div>
+              <div class="shot-cards-wrapper" id="shot-cards-wrapper">
+                <!-- Dynamically populated shot list cards -->
+              </div>
+            </div>
+          </div>
+
+          <!-- CAPTIONS TAB CONTENT -->
+          <div id="drawer-sec-captions" class="drawer-section hidden">
+            <div class="drawer-padding">
+              <button id="drawer-btn-auto-captions" class="nle-header-btn wide-btn" style="margin-bottom: 10px;">💬 Auto-Generate Subtitles</button>
+              <button id="btn-import-srt" class="nle-header-btn wide-btn" style="margin-bottom: 15px;">📄 Import .SRT Subtitle File</button>
+
+              <div class="field-group">
+                <label class="field-label">Subtitle Text</label>
+                <textarea class="field-textarea" id="drawer-subtitle-text" rows="3">Scene_01_Intro: Sci-Fi Cityline Preview</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- AUDIO TAB CONTENT -->
+          <div id="drawer-sec-audio" class="drawer-section hidden">
+            <div class="drawer-padding">
+              <div class="smart-title">🎵 AUDIO & MUSIC CATEGORIES</div>
+              <div class="audio-category-item">🔊 Cinematic Synth BGM</div>
+              <div class="audio-category-item">💥 Action Explosions SFX</div>
+              <div class="audio-category-item">🎙️ Character Voice Dialogue</div>
+              <div class="audio-category-item">🌿 Ambient Rain Background</div>
+            </div>
+          </div>
+
+          <!-- EFFECTS TAB CONTENT -->
+          <div id="drawer-sec-effects" class="drawer-section hidden">
+            <div class="drawer-padding">
+              <div class="smart-title">✨ VISUAL EFFECTS & GRADING</div>
+              <div class="audio-category-item">🎞️ 35mm Film Grain</div>
+              <div class="audio-category-item">🌆 Cyberpunk Neon Glow</div>
+              <div class="audio-category-item">📺 Vintage CRT Scanlines</div>
+            </div>
+          </div>
+
+          <!-- PLUGINS TAB CONTENT -->
+          <div id="drawer-sec-plugins" class="drawer-section hidden">
+            <div class="drawer-padding">
+              <div class="smart-title">🧩 LOCAL WAN2GP EXTENSIONS</div>
+              <div class="plugin-status-card active">
+                <div class="plugin-name">Wan 2.1 Pipeline</div>
+                <div class="plugin-badge">ONLINE (GPU CUDA)</div>
+              </div>
+              <div class="plugin-status-card">
+                <div class="plugin-name">LTX Video Engine</div>
+                <div class="plugin-badge">READY</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- Left Resizer Splitter Bar -->
+      <div class="sidebar-resizer horizontal" id="left-resizer" title="Drag to resize left sidebar width"></div>
+
+      <!-- Center Panel: Monitor / Viewport -->
+      <section class="panel panel-monitor" id="panel-monitor">
+        <div class="monitor-header">
+          <div class="monitor-header-left">
+            <!-- Aspect Ratio Switcher Dropdown -->
+            <div class="ratio-capsule">
+              <span class="ratio-icon">📐</span>
+              <select class="monitor-select" id="aspect-ratio-select" title="Canvas Aspect Ratio">
+                <option value="16:9">16:9 (YouTube)</option>
+                <option value="9:16">9:16 (TikTok/Reels)</option>
+                <option value="1:1">1:1 (Square)</option>
+                <option value="4:3">4:3 (Classic)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="monitor-header-controls">
+            <!-- Proxy Resolution Selector -->
+            <select class="monitor-select" id="monitor-resolution" title="Proxy Resolution">
+              <option value="1080p">1080p Full</option>
+              <option value="720p">720p Proxy</option>
+              <option value="480p">480p Proxy</option>
+              <option value="360p">360p Proxy</option>
+            </select>
+
+            <button id="btn-fullscreen" class="icon-btn-monitor" title="Fullscreen Player (F)">⛶</button>
+            <div class="timecode-box" id="timecode-display">00:00:00:00</div>
+          </div>
+        </div>
+
+        <!-- 16:9 Canvas Viewport Frame -->
+        <div class="viewport-wrapper">
+          <div class="viewport-screen ratio-16-9" id="viewport-screen">
+            
+            <!-- Video Media Layer -->
+            <video id="viewport-video" class="viewport-media hidden" playsinline></video>
+            
+            <!-- Image Media Layer -->
+            <img id="viewport-img" class="viewport-media viewport-bg-img" src="scifi_city_preview.jpg" alt="Preview Video Screen">
+            
+            <!-- Audio Visualizer Overlay -->
+            <div id="viewport-audio-visualizer" class="viewport-audio-card hidden">
+              <div class="audio-card-title" id="audio-file-label">Cyber_BGM.wav</div>
+              <div class="audio-wave-anim">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+
+            <!-- Subtitle Layer overlay -->
+            <div class="viewport-subtitles" id="viewport-subtitles">
+              <span id="sub-text">Scene_01_Intro: Sci-Fi Cityline Preview</span>
+            </div>
+
+            <!-- Wan2GP Real AI Render Progress Overlay -->
+            <div id="render-progress-overlay" class="render-overlay hidden">
+              <div class="render-card">
+                <div class="render-spinner">⚡</div>
+                <h3 class="render-title" id="render-overlay-title">WAN2GP RENDER ENGINE</h3>
+                <p class="render-status" id="render-status-text">Connecting to Wan2GP local pipeline...</p>
+                
+                <div class="render-bar-track">
+                  <div class="render-bar-fill" id="render-bar-fill"></div>
+                </div>
+                
+                <div class="render-meta">
+                  <span id="render-percent-text">0%</span>
+                  <span id="render-model-text">Model: Wan 2.1 14B</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transport Deck & Scrubber Control -->
+        <div class="transport-deck">
+          <div class="timecode-row">
+            <span class="tc-current" id="tc-current-time">00:00:00</span>
+            <span class="tc-duration" id="tc-total-duration">00:01:30</span>
+          </div>
+
+          <div class="scrubber-track-container">
+            <input type="range" id="scrubber-input" min="0" max="100" value="0" step="0.05" class="scrubber-slider">
+          </div>
+
+          <div class="metallic-transport-buttons">
+            <button id="btn-prev" class="btn-circle-metallic" title="Previous Frame (⏮ / Shift+Click Cut)" aria-label="Previous Frame">⏮</button>
+            <button id="btn-play" class="btn-circle-metallic play" title="Play/Pause (Space)" aria-label="Play/Pause">▶</button>
+            <button id="btn-next" class="btn-circle-metallic" title="Next Frame (⏭ / Shift+Click Cut)" aria-label="Next Frame">⏭</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Resizer Splitter Bar -->
+      <div class="sidebar-resizer horizontal" id="right-resizer" title="Drag to resize right inspector width"></div>
+
+      <!-- Right Panel: Inspector -->
+      <aside class="panel panel-inspector" id="panel-inspector">
+        <div class="inspector-sheen"></div>
+        
+        <!-- Right Inspector Tabs -->
+        <div class="inspector-tabs">
+          <button class="inspector-tab active" id="tab-video" data-tab="video">🎥 Basic</button>
+          <button class="inspector-tab" id="tab-smart" data-tab="smart">✨ Smart</button>
+          <button class="inspector-tab" id="tab-audio" data-tab="audio">🎵 Audio</button>
+          <button class="inspector-tab" id="tab-text" data-tab="text">💬 Subtitle</button>
+        </div>
+
+        <div class="inspector-fields">
+          <!-- VIDEO TAB CONTENT -->
+          <div id="inspector-sec-video" class="inspector-section">
+            <div class="field-group">
+              <label class="field-label">ACTIVE ASSET</label>
+              <input type="text" class="field-input" id="inspect-asset-name" value="Shot_01_BG.mp4" readonly>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Transform Scale</label>
+              <div class="slider-row">
+                <input type="range" min="50" max="200" value="100" class="field-range" id="inspect-scale">
+                <span class="range-val" id="val-scale">100%</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Opacity</label>
+              <div class="slider-row">
+                <input type="range" min="0" max="100" value="100" class="field-range" id="inspect-opacity">
+                <span class="range-val" id="val-opacity">100%</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">AI Render Model</label>
+              <select class="field-select" id="inspect-ai-model">
+                <option value="wan2.1">Wan 2.1 14B (Default)</option>
+                <option value="wan2.1-t2v">Wan 2.1 T2V (1.3B)</option>
+                <option value="ltx-video">LTX Video v0.9</option>
+                <option value="hunyuan">Hunyuan Video AI</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <div class="field-label-row">
+                <label class="field-label">Scene Prompt (AI Generation)</label>
+                <button id="btn-ai-idea" class="btn-ai-sparkle" title="Generate Creative Scene Idea">✨ Generate Idea</button>
+              </div>
+              <div class="prompt-wrapper">
+                <textarea class="field-textarea" id="inspect-prompt" rows="3" placeholder="Describe the scene...">2D animated anime style, close up shot of a cybernetic hero character speaking in a neon lit futuristic city</textarea>
+                <div id="prompt-ghost" class="prompt-ghost"></div>
+              </div>
+              <div class="tab-hint">Press <kbd>Tab</kbd> to accept suggestion</div>
+            </div>
+
+            <!-- Iterative Inspector Action Bar -->
+            <div class="prompt-action-bar" id="inspect-prompt-action-bar" style="margin-top: 6px;">
+              <button class="btn-metallic-wide" id="btn-inspect-generate-shot">🎬 Generate Shot</button>
+              <div class="post-gen-row hidden" id="inspect-post-gen-row">
+                <button class="nle-header-btn" id="btn-inspect-regenerate">↺ Regenerate</button>
+                <button class="btn-metallic-wide" id="btn-inspect-add-timeline">➕ Add to Timeline</button>
+              </div>
+            </div>
+
+            <div class="field-group" style="margin-top: 10px;">
+              <label class="field-label">Negative Prompt</label>
+              <input type="text" class="field-input" id="inspect-neg-prompt" value="blurry, distorted, low quality, noise, watermark">
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Camera Framing</label>
+              <select class="field-select" id="inspect-camera">
+                <option value="cu">CU Dialogue</option>
+                <option value="medium">Medium Shot</option>
+                <option value="wide">Wide Landscape</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- SMART AI TOOLS TAB CONTENT -->
+          <div id="inspector-sec-smart" class="inspector-section hidden">
+            <div class="smart-ai-tools-card">
+              <div class="smart-title">⚡ SMART AI TOOLS</div>
+              <button id="btn-ai-bg-remove" class="nle-header-btn wide-btn" title="Remove video/image background">✨ AI Remove Background</button>
+              <button id="btn-auto-captions" class="nle-header-btn wide-btn" title="Auto-generate audio subtitles">💬 Auto-Generate Captions</button>
+            </div>
+          </div>
+
+          <!-- AUDIO TAB CONTENT -->
+          <div id="inspector-sec-audio" class="inspector-section hidden">
+            <div class="field-group">
+              <label class="field-label">Volume Level</label>
+              <div class="slider-row">
+                <input type="range" min="0" max="100" value="80" class="field-range" id="inspect-volume">
+                <span class="range-val" id="val-volume">80%</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Fade In Duration</label>
+              <select class="field-select" id="inspect-fade-in">
+                <option value="0">0.0s (None)</option>
+                <option value="0.5">0.5s Soft Fade</option>
+                <option value="1.0">1.0s Smooth Fade</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Fade Out Duration</label>
+              <select class="field-select" id="inspect-fade-out">
+                <option value="0">0.0s (None)</option>
+                <option value="0.5">0.5s Soft Fade</option>
+                <option value="1.0">1.0s Smooth Fade</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Audio Track Type</label>
+              <select class="field-select" id="inspect-audio-type">
+                <option value="dialogue">Voice Dialogue / Dub</option>
+                <option value="bgm">Background Music (BGM)</option>
+                <option value="sfx">Sound Effect (SFX)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- TEXT / SUBTITLE TAB CONTENT -->
+          <div id="inspector-sec-text" class="inspector-section hidden">
+            <div class="field-group">
+              <label class="field-label">Subtitle Caption Text</label>
+              <textarea class="field-textarea" id="inspect-subtitle-text" rows="2" placeholder="Enter caption text...">Scene_01_Intro: Sci-Fi Cityline Preview</textarea>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Font Family</label>
+              <select class="field-select" id="inspect-font-family">
+                <option value="Inter">Inter (Clean)</option>
+                <option value="Outfit">Outfit (Display)</option>
+                <option value="JetBrains Mono">JetBrains Mono (Code)</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Caption Style Preset</label>
+              <select class="field-select" id="inspect-caption-style">
+                <option value="classic">Classic Subtitle Box</option>
+                <option value="neon">Neon Cyan Glow</option>
+                <option value="minimal">Minimal Bold White</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- Draggable Horizontal Resizer Bar for Timeline -->
+    <div class="timeline-resizer" id="timeline-resizer" title="Drag up/down to adjust timeline panel height"></div>
+
+    <!-- 3. Bottom Timeline Panel -->
+    <footer class="panel panel-timeline" id="panel-timeline">
+      <div class="timeline-header">
+        <div class="timeline-header-left">
+          <span class="panel-title">TIMELINE</span>
+          <button id="btn-tool-blade" class="icon-btn-timeline" title="Blade Tool (B)">✂️ Blade Mode</button>
+        </div>
+
+        <div class="zoom-box">
+          <button id="btn-snap" class="icon-btn-timeline active" title="Toggle Magnetic Snapping (ON)">🧲 Snapping ON</button>
+          <span class="zoom-divider">|</span>
+          <span>Time Scale Zoom:</span>
+          <input type="range" id="zoom-slider" min="1" max="5" value="2" class="zoom-slider" title="Scale Zoom (Pixels Per Second)">
+        </div>
+      </div>
+
+      <div class="timeline-tracks-area" id="timeline-tracks-area">
+        <div class="timeline-scroll-content" id="timeline-scroll-content">
+          
+          <!-- Ruler Row -->
+          <div class="timeline-ruler-row">
+            <div class="ruler-spacer"></div>
+            <div class="ruler-ticks-container" id="ruler-ticks-container"></div>
+          </div>
+
+          <!-- Playhead Vertical Line overlay -->
+          <div class="playhead-line" id="playhead-line">
+            <div class="playhead-head">◆</div>
+          </div>
+
+          <!-- Track 1: VIDEO 1 -->
+          <div class="timeline-track-row" data-track-id="video1">
+            <div class="track-info-head">
+              <span class="track-name">VIDEO 1</span>
+              <div class="track-icons">
+                <span class="track-btn btn-lock" title="Lock/Unlock Track">🔒</span>
+                <span class="track-btn btn-eye" title="Hide/Show Track Visuals">👁️</span>
+                <span class="track-btn btn-mute" title="Mute/Unmute Track Audio">🔊</span>
+              </div>
+            </div>
+            <div class="track-lane-area">
+              <div class="clip-block clip-video" data-start="0" data-duration="15">
+                <div class="resize-handle left"></div>
+                <span class="clip-diamond">◆</span>
+                <span class="clip-label" id="timeline-v1-label">Shot_01_BG.mp4</span>
+                <span class="clip-meta">[15.0s]</span>
+                <div class="resize-handle right"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Track 2: CHR 1 (Character Animation) -->
+          <div class="timeline-track-row" data-track-id="chr1">
+            <div class="track-info-head">
+              <span class="track-name">CHR 1</span>
+              <div class="track-icons">
+                <span class="track-btn btn-lock" title="Lock/Unlock Track">🔒</span>
+                <span class="track-btn btn-eye" title="Hide/Show Track Visuals">👁️</span>
+                <span class="track-btn btn-mute" title="Mute/Unmute Track Audio">🔊</span>
+              </div>
+            </div>
+            <div class="track-lane-area">
+              <div class="clip-block clip-char" data-start="10" data-duration="10">
+                <div class="resize-handle left"></div>
+                <span class="clip-diamond">◆</span>
+                <span class="clip-label">CHAR: Hero_LipSync</span>
+                <span class="clip-meta">[10.0s]</span>
+                <div class="resize-handle right"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Track 3: TEXT 1 (Subtitles / Captions) -->
+          <div class="timeline-track-row" data-track-id="text1">
+            <div class="track-info-head">
+              <span class="track-name">TEXT 1</span>
+              <div class="track-icons">
+                <span class="track-btn btn-lock" title="Lock/Unlock Track">🔒</span>
+                <span class="track-btn btn-eye" title="Hide/Show Track Visuals">👁️</span>
+                <span class="track-btn btn-mute" title="Mute/Unmute Track Audio">🔊</span>
+              </div>
+            </div>
+            <div class="track-lane-area">
+              <div class="clip-block clip-text" data-start="0" data-duration="20">
+                <div class="resize-handle left"></div>
+                <span class="clip-diamond">◆</span>
+                <span class="clip-label">TXT: Scene_01_Subtitle</span>
+                <span class="clip-meta">[20.0s]</span>
+                <div class="resize-handle right"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Track 4: AUD 2 (Background Music / SFX) -->
+          <div class="timeline-track-row" data-track-id="aud2">
+            <div class="track-info-head">
+              <span class="track-name">AUD 2</span>
+              <div class="track-icons">
+                <span class="track-btn btn-lock" title="Lock/Unlock Track">🔒</span>
+                <span class="track-btn btn-eye" title="Hide/Show Track Visuals">👁️</span>
+                <span class="track-btn btn-mute" title="Mute/Unmute Track Audio">🔊</span>
+              </div>
+            </div>
+            <div class="track-lane-area">
+              <div class="clip-block clip-audio" data-start="0" data-duration="25">
+                <div class="resize-handle left"></div>
+                <span class="clip-diamond">◆</span>
+                <span class="clip-label">AUD: Cyber_BGM.wav</span>
+                <span class="clip-meta">[25.0s]</span>
+                <div class="resize-handle right"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Timeline Right-Click Context Menu -->
+  <div id="timeline-context-menu" class="context-menu hidden">
+    <div class="menu-item" id="ctx-split"><span class="menu-icon">✂️</span> Split (Ctrl+B)</div>
+    <div class="menu-item" id="ctx-copy"><span class="menu-icon">📋</span> Copy Clip</div>
+    <div class="menu-item" id="ctx-duplicate"><span class="menu-icon">📑</span> Duplicate Clip</div>
+    <div class="menu-item" id="ctx-crop"><span class="menu-icon">📐</span> Crop / Fill</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" id="ctx-paste"><span class="menu-icon">📥</span> Paste Clip</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item danger" id="ctx-delete"><span class="menu-icon">🗑️</span> Remove Asset</div>
+  </div>
+
+  <!-- Task 5: Export Settings Modal (FFmpeg Multi-Track Assembly) -->
+  <div id="export-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">🎬 EXPORT TIMELINE SEQUENCE</h3>
+        <button id="btn-close-export-modal" class="icon-btn">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Output File Name</label>
+          <input type="text" id="export-filename-input" class="field-input" value="Scene_01_Intro_Export.mp4">
+        </div>
+
+        <div class="field-row" style="display: flex; gap: 10px; margin-top: 8px;">
+          <div class="field-group" style="flex: 1;">
+            <label class="field-label">Resolution</label>
+            <select id="export-resolution" class="field-select">
+              <option value="1080p">1080p Full HD (1920x1080)</option>
+              <option value="720p">720p HD (1280x720)</option>
+              <option value="4k">4K Ultra HD (3840x2160)</option>
+            </select>
+          </div>
+
+          <div class="field-group" style="flex: 1;">
+            <label class="field-label">Container Format</label>
+            <select id="export-format" class="field-select">
+              <option value="mp4">MP4 (H.264 Video)</option>
+              <option value="gif">GIF Animation</option>
+              <option value="webm">WEBM Web Video</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row" style="display: flex; gap: 10px; margin-top: 8px;">
+          <div class="field-group" style="flex: 1;">
+            <label class="field-label">Target Bitrate</label>
+            <select id="export-bitrate" class="field-select">
+              <option value="12M">High (12 Mbps)</option>
+              <option value="6M">Medium (6 Mbps)</option>
+              <option value="3M">Low (3 Mbps)</option>
+            </select>
+          </div>
+
+          <div class="field-group" style="flex: 1;">
+            <label class="field-label">Framerate</label>
+            <select id="export-fps" class="field-select">
+              <option value="24">24 fps (Cinematic Film)</option>
+              <option value="30">30 fps (Standard Broadcast)</option>
+              <option value="60">60 fps (Smooth High-Frame)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="export-summary-box" style="margin-top: 12px;">
+          <div class="summary-line"><span>Active Sequence Tracks:</span> <strong id="summary-tracks-count">VIDEO 1, CHR 1, TEXT 1, AUD 2</strong></div>
+          <div class="summary-line"><span>Total Sequence Duration:</span> <strong id="summary-seq-dur">25.0s (600 Frames)</strong></div>
+          <div class="summary-line"><span>FFmpeg Compositing Engine:</span> <strong>Multi-Track H.264 / AAC Muxing</strong></div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
+        <button id="btn-cancel-export" class="nle-header-btn">Cancel</button>
+        <button id="btn-start-export" class="btn-metallic-render">🚀 Start Export</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI SCRIPT ASSISTANT MODAL -->
+  <div id="script-modal" class="modal-overlay hidden">
+    <div class="modal-card setup-wizard-card wide-modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <div class="modal-header-left" style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.4rem;">✨</span>
+          <h3 class="modal-title">AI SCRIPT ASSISTANT & SHOT LIST GENERATOR</h3>
+        </div>
+        <button id="btn-close-script-modal" class="icon-btn">✕</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="field-group">
+          <label class="field-label">Story Idea / Topic</label>
+          <textarea class="field-textarea" id="script-idea-input" rows="3" placeholder="Enter story topic or creative idea...">A heroic cybernetic cat and his witty robot sidekick escape a high-tech surveillance drone in a neon-lit futuristic city.</textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="field-group">
+            <label class="field-label">Animation Genre</label>
+            <select class="field-select" id="script-genre-select">
+              <option value="2D Cartoon Action">2D Cartoon Action</option>
+              <option value="Anime Comedy">Anime Comedy</option>
+              <option value="Sci-Fi Cyberpunk">Sci-Fi Cyberpunk</option>
+              <option value="Fantasy Adventure">Fantasy Adventure</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Target Duration</label>
+            <select class="field-select" id="script-duration-select">
+              <option value="15">15 Seconds (3 Shots)</option>
+              <option value="30" selected>30 Seconds (6 Shots)</option>
+              <option value="60">60 Seconds (12 Shots)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="script-output-box hidden" id="script-output-box" style="margin-top: 6px;">
+          <label class="field-label">Generated Scene Script</label>
+          <textarea class="field-textarea" id="script-result-text" rows="4" readonly style="font-family: var(--font-mono); font-size: 0.72rem;"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
+        <button id="btn-cancel-script" class="nle-header-btn">Cancel</button>
+        <button id="btn-generate-script-action" class="btn-metallic-render">⚡ Generate Script & Parse Shot List</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIRST-RUN SETUP & MODEL DOWNLOADER WIZARD MODAL -->
+  <div id="setup-wizard-modal" class="modal-overlay hidden">
+    <div class="modal-card setup-wizard-card">
+      <div class="modal-header">
+        <div class="modal-header-left" style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.4rem;">⚡</span>
+          <h3 class="modal-title">INITIALIZING LOCAL ENGINE</h3>
+        </div>
+        <button id="btn-close-setup-modal" class="icon-btn">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+          Open Drama Engine is preparing local AI inference weights for <strong>Wan 2.1 (14B High-Quality VAE)</strong>.
+        </p>
+
+        <div class="model-weights-card">
+          <div class="weights-header">
+            <span class="weights-name">Wan 2.1 14B High-Quality VAE</span>
+            <span class="weights-size">6.1 GB Safetensors</span>
+          </div>
+
+          <div class="render-bar-track" style="margin-top: 8px;">
+            <div class="render-bar-fill" id="setup-bar-fill" style="width: 0%;"></div>
+          </div>
+
+          <div class="render-meta" style="margin-top: 6px;">
+            <span id="setup-percent-text">0%</span>
+            <span id="setup-status-text">Status: Missing local weights file</span>
+          </div>
+        </div>
+
+        <div class="dev-fallback-notice" style="margin-top: 12px; font-size: 0.72rem; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--bg-panel-border);">
+          💡 <strong>Dev Mode Fallback:</strong> If skipping download, Open Drama Engine automatically runs in <strong>Fallback Simulated Mode</strong> so all shot generation and rendering features work seamlessly for testing!
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+        <button id="btn-skip-simulated-dev" class="nle-header-btn">⚡ Fallback Simulated Mode</button>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-start-model-download" class="btn-metallic-render">📥 Download AI Model Assets (6.1 GB)</button>
+          <button id="btn-launch-editor" class="btn-metallic-render hidden">🚀 Launch Editor</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main NLE Suite Engine Controller -->
+  <script src="engine.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+{
+  "name": "open-drama-engine",
+  "version": "1.0.0",
+  "description": "Open Drama Engine — AI Animation & Video Production Suite Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "ai-animation",
+    "nle",
+    "video-editor",
+    "wan2gp",
+    "electron"
+  ],
+  "author": "Open Drama Engine Team",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0"
+  },
+  "build": {
+    "appId": "com.opendramaengine.app",
+    "productName": "Open Drama Engine",
+    "copyright": "Copyright © 2026 Open Drama Engine Team",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "engine.js",
+      "index.html",
+      "index.css",
+      "omnirouter.py",
+      "render_engine.py",
+      "engine_bridge.py",
+      "scifi_city_preview.jpg",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "scifi_city_preview.jpg"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Open Drama Engine"
+    }
+  }
+}
