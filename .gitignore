@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+generated_assets/
+*.mp4
+node_modules/
+temp/
