@@ -2,7 +2,7 @@
 
 Open Drama Engine is an open-source, automated 2D animation scripting and keyframe generation studio.
 
-## ?? Key Features
+## Key Features
 
 * Gradio Web Dashboard (app.py): Clean browser interface for prompt input, script view, and live rendering progress.
 * Local ComfyUI Pipeline: Zero-cost local image generation powered by GPU acceleration.
