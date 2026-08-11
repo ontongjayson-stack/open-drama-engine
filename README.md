@@ -1,4 +1,4 @@
-# ?? Open Drama Engine v2.0
+# Open Drama Engine v2.0
 
 Open Drama Engine is an open-source, automated 2D animation scripting and keyframe generation studio.
 
@@ -11,7 +11,7 @@ Open Drama Engine is an open-source, automated 2D animation scripting and keyfra
 
 ---
 
-## ??? Quick Start
+## Quick Start
 
 1. Launch ComfyUI Server:
 python main.py --listen 127.0.0.1 --port 8188
