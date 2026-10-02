@@ -1,63 +1,31 @@
 {
   "name": "open-drama-engine",
-  "version": "1.0.0",
-  "description": "Open Drama Engine — AI Animation & Video Production Suite Desktop Application",
+  "version": "2.0.0",
+  "description": "Headless 2D animation pipeline and automated studio engine.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "server": "node server.js",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "engine:run": "node src/orchestrator/pipeline-orchestrator.js",
+    "engine:headless": "node src/orchestrator/pipeline-orchestrator.js",
+    "worker:render": "node src/workers/render-worker.js",
+    "test:pipeline": "node tests/test-timeline-runner.js"
   },
   "keywords": [
-    "ai-animation",
-    "nle",
-    "video-editor",
-    "wan2gp",
+    "animation",
+    "headless",
+    "2d",
+    "video-generation",
+    "ffmpeg",
     "electron"
   ],
-  "author": "Open Drama Engine Team",
-  "license": "Apache-2.0",
+  "author": "ARK1 / Open Drama Team",
+  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "axios": "^1.6.8",
+    "dotenv": "^17.4.2",
+    "minimist": "^1.2.8"
   },
   "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.0"
-  },
-  "build": {
-    "appId": "com.opendramaengine.app",
-    "productName": "Open Drama Engine",
-    "copyright": "Copyright © 2026 Open Drama Engine Team",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "main.js",
-      "server.js",
-      "engine.js",
-      "index.html",
-      "index.css",
-      "omnirouter.py",
-      "render_engine.py",
-      "engine_bridge.py",
-      "scifi_city_preview.jpg",
-      "package.json"
-    ],
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
-      "icon": "scifi_city_preview.jpg"
-    },
-    "nsis": {
-      "oneClick": true,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Open Drama Engine"
-    }
+    "electron": "^43.3.0"
   }
 }

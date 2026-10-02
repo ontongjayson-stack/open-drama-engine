@@ -212,11 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // AI SCRIPT ASSISTANT MODAL & AUTOMATED SHOT LIST ENGINE
   // --------------------------------------------------------------------------
   function openScriptModal() {
-    scriptModal.classList.remove('hidden');
+    if (scriptModal) scriptModal.classList.remove('hidden');
   }
 
   function closeScriptModal() {
-    scriptModal.classList.add('hidden');
+    if (scriptModal) scriptModal.classList.add('hidden');
   }
 
   if (btnOpenScriptModal) btnOpenScriptModal.addEventListener('click', openScriptModal);
@@ -226,9 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnGenerateScriptAction) {
     btnGenerateScriptAction.addEventListener('click', async () => {
-      const topic = scriptIdeaInput.value.trim() || 'Heroic cybernetic cat escaping surveillance drone';
-      const genre = scriptGenreSelect.value;
-      const targetDuration = parseInt(scriptDurationSelect.value) || 30;
+      const topic = (scriptIdeaInput && scriptIdeaInput.value.trim()) || 'Heroic cybernetic cat escaping surveillance drone';
+      const genre = (scriptGenreSelect && scriptGenreSelect.value) || '2D Cartoon Action';
+      const targetDuration = (scriptDurationSelect && parseInt(scriptDurationSelect.value)) || 30;
 
       btnGenerateScriptAction.disabled = true;
       btnGenerateScriptAction.textContent = '⏳ Generating Script...';
@@ -244,17 +244,19 @@ document.addEventListener('DOMContentLoaded', () => {
           const data = await response.json();
           console.log('✨ AI Script Generation Response:', data);
 
-          scriptResultText.value = data.scriptText || 'Script generated successfully.';
-          scriptOutputBox.classList.remove('hidden');
+          if (scriptResultText) scriptResultText.value = data.scriptText || 'Script generated successfully.';
+          if (scriptOutputBox) scriptOutputBox.classList.remove('hidden');
           parsedShotsData = data.shots || [];
 
           renderShotCards(parsedShotsData);
 
           // Switch drawer to Prompts tab so user sees Shot List cards immediately
           switchLeftDrawerTab('prompts');
-          railBtns.forEach(b => {
-            b.classList.toggle('active', b.dataset.panel === 'prompts');
-          });
+          if (railBtns) {
+            railBtns.forEach(b => {
+              b.classList.toggle('active', b.dataset.panel === 'prompts');
+            });
+          }
           if (drawerTitle) drawerTitle.textContent = 'PROMPTS TOOLBOX';
         }
       } catch (err) {
@@ -263,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         parsedShotsData = [
           { id: 1, title: 'Shot 01: Hero Intro', prompt: `2D cartoon ${genre} style, close up shot of a cybernetic cat hero in neon city, ${topic}`, framing: 'CU Dialogue', duration: 5.0 },
           { id: 2, title: 'Shot 02: Sidekick Reaction', prompt: `2D cartoon ${genre} style, medium tracking shot of robot sidekick dancing, ${topic}`, framing: 'Medium Tracking', duration: 5.0 },
-          { id: 3, title: 'Shot 03: High Voltage Chase', prompt: `2D cartoon ${genre} style, wide action shot of hovercars racing through neon alley, ${topic}`, framing: 'Wide Action', duration: 5.0 }
+          { id: 3, title: 'Shot 03: High Voltage Chase', prompt: `2D cartoon ${genre} style, wide action shot of futuristic hovercars racing through neon alley, ${topic}`, framing: 'Wide Action', duration: 5.0 }
         ];
         renderShotCards(parsedShotsData);
       } finally {
@@ -286,7 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
     shots.forEach((shot, index) => {
       const cardEl = document.createElement('div');
       cardEl.className = 'shot-card-item';
-      cardEl.dataset.shotId = shot.id || (index + 1);
+      const shotId = shot.id || (index + 1);
+      cardEl.dataset.shotId = shotId;
 
       cardEl.innerHTML = `
         <div class="shot-card-header">
@@ -307,6 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <option value="Close-Up" ${shot.framing === 'Close-Up' ? 'selected' : ''}>Close-Up</option>
             </select>
           </div>
+          <div class="shot-reroll-row">
+            <input type="text" class="field-input shot-reroll-input" id="shot-reroll-input-${index}" placeholder="Tweak instruction (e.g. Add dramatic neon glow)...">
+            <button class="btn-shot-reroll" id="btn-reroll-shot-${index}">⚡ Re-roll</button>
+          </div>
         </div>
         <div class="shot-card-actions">
           <button class="btn-shot-render" id="btn-render-shot-${index}">🎬 Render Shot</button>
@@ -319,7 +326,114 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btnRender) {
         btnRender.addEventListener('click', () => renderSingleShotCard(cardEl, shot, index));
       }
+
+      const btnReroll = cardEl.querySelector(`#btn-reroll-shot-${index}`);
+      if (btnReroll) {
+        btnReroll.addEventListener('click', () => rerollSingleShotCard(cardEl, shot, index));
+      }
     });
+  }
+
+  async function rerollSingleShotCard(cardEl, shotObj, index) {
+    const promptTextarea = cardEl.querySelector('.shot-card-prompt');
+    const framingSelect = cardEl.querySelector('.shot-card-framing');
+    const rerollInput = cardEl.querySelector(`#shot-reroll-input-${index}`);
+    const btnReroll = cardEl.querySelector(`#btn-reroll-shot-${index}`);
+    const statusBadge = cardEl.querySelector(`#shot-status-${index}`);
+
+    const originalPrompt = promptTextarea ? promptTextarea.value : (shotObj.prompt || '');
+    const tweakInstruction = rerollInput ? rerollInput.value.trim() : '';
+
+    if (!tweakInstruction) {
+      alert('Please enter a tweak instruction to re-roll this shot (e.g. "Add dramatic lighting" or "Make it a wide tracking shot").');
+      if (rerollInput) rerollInput.focus();
+      return;
+    }
+
+    // UI Loading State
+    if (btnReroll) {
+      btnReroll.disabled = true;
+      btnReroll.textContent = '⏳ Re-rolling...';
+    }
+    if (statusBadge) {
+      statusBadge.className = 'shot-status-badge rendering';
+      statusBadge.textContent = 'RE-ROLLING...';
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:7860/api/refine-shot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shotId: shotObj.id || (index + 1),
+          originalPrompt: originalPrompt,
+          tweakInstruction: tweakInstruction,
+          topic: scriptIdeaInput ? scriptIdeaInput.value : 'General',
+          genre: scriptGenreSelect ? scriptGenreSelect.value : '2D Cartoon Action'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const resData = await response.json();
+      if (resData && (resData.prompt || resData.refinedPrompt)) {
+        const newPrompt = resData.prompt || resData.refinedPrompt;
+        const newFraming = resData.framing || resData.refinedFraming;
+
+        // UI Update: Dynamically replace card prompt and framing without re-generating script or clearing timeline state
+        if (promptTextarea) promptTextarea.value = newPrompt;
+        shotObj.prompt = newPrompt;
+
+        if (newFraming && framingSelect) {
+          framingSelect.value = newFraming;
+          shotObj.framing = newFraming;
+        }
+
+        if (rerollInput) rerollInput.value = '';
+
+        if (statusBadge) {
+          statusBadge.className = 'shot-status-badge ready';
+          statusBadge.textContent = 'UPDATED';
+          setTimeout(() => {
+            if (statusBadge.textContent === 'UPDATED') {
+              statusBadge.className = 'shot-status-badge idle';
+              statusBadge.textContent = 'IDLE';
+            }
+          }, 3000);
+        }
+      } else {
+        alert('Shot re-roll returned empty response. Please try again.');
+        if (statusBadge) {
+          statusBadge.className = 'shot-status-badge idle';
+          statusBadge.textContent = 'IDLE';
+        }
+      }
+    } catch (err) {
+      console.warn('Shot re-roll API error:', err);
+      // Fallback local tweak if backend offline
+      const fallbackPrompt = `${originalPrompt}, ${tweakInstruction}`;
+      if (promptTextarea) promptTextarea.value = fallbackPrompt;
+      shotObj.prompt = fallbackPrompt;
+      if (rerollInput) rerollInput.value = '';
+
+      if (statusBadge) {
+        statusBadge.className = 'shot-status-badge ready';
+        statusBadge.textContent = 'UPDATED';
+        setTimeout(() => {
+          if (statusBadge.textContent === 'UPDATED') {
+            statusBadge.className = 'shot-status-badge idle';
+            statusBadge.textContent = 'IDLE';
+          }
+        }, 3000);
+      }
+    } finally {
+      if (btnReroll) {
+        btnReroll.disabled = false;
+        btnReroll.textContent = '⚡ Re-roll';
+      }
+    }
   }
 
   async function renderSingleShotCard(cardEl, shotObj, index) {
@@ -404,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
           privacyMode: isPrivacy
         };
 
-        console.log(`[Batch Queue]: Processing Shot ${i+1}/${cards.length}: "${promptText[:30]}..."`);
+        console.log(`[Batch Queue]: Processing Shot ${i+1}/${cards.length}: "${promptText.slice(0, 30)}..."`);
         const apiResult = await callGradioWan2GPEndpoint(payload);
 
         cardEl.classList.remove('rendering');
@@ -707,8 +821,79 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUIProgress(currentSec, totalSeqDuration);
   }
 
-  zoomSlider.addEventListener('input', renderRulerAndClips);
+  if (zoomSlider) zoomSlider.addEventListener('input', renderRulerAndClips);
   renderRulerAndClips();
+
+  // Header Project Actions
+  if (btnUndo) btnUndo.addEventListener('click', () => console.log('↺ Undo action triggered'));
+  if (btnRedo) btnRedo.addEventListener('click', () => console.log('↻ Redo action triggered'));
+
+  if (btnSaveProj) {
+    btnSaveProj.addEventListener('click', () => {
+      const projName = projectNameInput ? projectNameInput.value.trim() : 'Scene_01_Intro';
+      const projData = { name: projName, timestamp: new Date().toISOString(), timeline: parseTimelineTracks() };
+      const blob = new Blob([JSON.stringify(projData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${projName}_project.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  if (btnOpenProj) {
+    btnOpenProj.addEventListener('click', () => {
+      if (projectFileInput) projectFileInput.click();
+    });
+  }
+
+  if (projectFileInput) {
+    projectFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const proj = JSON.parse(evt.target.result);
+          if (proj.name && projectNameInput) projectNameInput.value = proj.name;
+          alert(`📂 Project "${proj.name || file.name}" opened successfully!`);
+        } catch (err) {
+          console.error('Failed to parse project JSON:', err);
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  // Right Inspector Tabs Handler
+  if (inspectorTabs) {
+    inspectorTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        inspectorTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const tabName = tab.dataset.tab;
+        [inspectorSecVideo, inspectorSecSmart, inspectorSecAudio, inspectorSecText].forEach(sec => {
+          if (sec) sec.classList.add('hidden');
+        });
+
+        if (tabName === 'video' && inspectorSecVideo) inspectorSecVideo.classList.remove('hidden');
+        else if (tabName === 'smart' && inspectorSecSmart) inspectorSecSmart.classList.remove('hidden');
+        else if (tabName === 'audio' && inspectorSecAudio) inspectorSecAudio.classList.remove('hidden');
+        else if (tabName === 'text' && inspectorSecText) inspectorSecText.classList.remove('hidden');
+      });
+    });
+  }
+
+  // Inspector Sliders
+  if (inspectScale && valScale) inspectScale.addEventListener('input', () => valScale.textContent = inspectScale.value);
+  if (inspectOpacity && valOpacity) inspectOpacity.addEventListener('input', () => valOpacity.textContent = inspectOpacity.value);
+  if (inspectVolume && valVolume) inspectVolume.addEventListener('input', () => valVolume.textContent = inspectVolume.value);
+
+  // Timeline Tools
+  if (btnSnap) btnSnap.addEventListener('click', () => { isSnappingOn = !isSnappingOn; btnSnap.classList.toggle('active', isSnappingOn); });
+  if (btnToolBlade) btnToolBlade.addEventListener('click', () => { isBladeMode = !isBladeMode; btnToolBlade.classList.toggle('active', isBladeMode); });
 
   // --------------------------------------------------------------------------
   // 2. Left Drawer Tabs Switching

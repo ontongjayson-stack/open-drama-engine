@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Drama Engine — AI Studio Pro</title>
+  
+  <!-- Web App Manifest & App Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-512.png">
+  <meta name="theme-color" content="#030303">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Open Drama Engine">
+
+  <!-- Modern Typography Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-darkest: #06090e;
+      --bg-surface: #0c1017;
+      --bg-card: #131924;
+      --bg-card-hover: #1b2333;
+      --bg-input: #0a0e14;
+      --border-subtle: #1e293b;
+      --border-glow: #00f2fe;
+      --primary: #00f2fe;
+      --primary-glow: rgba(0, 242, 254, 0.35);
+      --accent-purple: #7928ca;
+      --accent-magenta: #ff0080;
+      --accent-gold: #f5a623;
+      --accent-emerald: #10b981;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-darkest);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-surface);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: var(--radius-full);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-faint);
+    }
+
+    /* Top Studio Header */
+    .studio-header {
+      background: rgba(12, 16, 23, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-badge-logo {
+      background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+      color: #000;
+      font-weight: 900;
+      font-size: 1.15rem;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title .pro-tag {
+      background: linear-gradient(90deg, var(--primary), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .header-status-pills {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .status-pill.btn-install {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.15) 0%, rgba(121, 40, 202, 0.15) 100%);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      cursor: pointer;
+      color: var(--text-main);
+      font-weight: 700;
+      transition: var(--transition-fast);
+    }
+    .status-pill.btn-install:hover {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.3) 0%, rgba(121, 40, 202, 0.3) 100%);
+      border-color: var(--primary);
+      box-shadow: 0 0 14px var(--primary-glow);
+      transform: translateY(-1px);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-green { background: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald); }
+    .dot-amber { background: var(--accent-gold); box-shadow: 0 0 8px var(--accent-gold); }
+    .dot-blue  { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+
+    /* Main Studio Container */
+    .studio-container {
+      max-width: 1720px;
+      margin: 0 auto;
+      padding: 24px 28px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* 6 AI Agent Cards Bar */
+    .agents-stage-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .section-headline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .active-engine-badge {
+      font-size: 0.72rem;
+      background: rgba(0, 242, 254, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+    }
+
+    .agent-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .agent-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .agent-card.active {
+      border-color: var(--primary);
+      background: linear-gradient(180deg, rgba(0, 242, 254, 0.08) 0%, var(--bg-card) 100%);
+      box-shadow: 0 0 24px rgba(0, 242, 254, 0.2);
+    }
+
+    .agent-card.active::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent-magenta));
+      animation: sweepGlow 1.5s infinite linear;
+    }
+
+    .agent-card.completed {
+      border-color: rgba(16, 185, 129, 0.5);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.06) 0%, var(--bg-card) 100%);
+    }
+
+    .agent-card.completed::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-emerald);
+    }
+
+    @keyframes sweepGlow {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .agent-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .agent-icon-avatar {
+      font-size: 1.4rem;
+    }
+
+    .agent-status-tag {
+      font-size: 0.65rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-faint);
+    }
+
+    .agent-card.active .agent-status-tag {
+      background: rgba(0, 242, 254, 0.2);
+      color: var(--primary);
+    }
+
+    .agent-card.completed .agent-status-tag {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-emerald);
+    }
+
+    .agent-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .agent-role {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .agent-activity {
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 28px;
+      line-height: 1.3;
+    }
+
+    /* Studio Main Work Area (Split 2 Columns) */
+    .studio-workspace {
+      display: grid;
+      grid-template-columns: 560px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* Left Column: Director Controls */
+    .controls-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .textarea-container {
+      position: relative;
+    }
+
+    .prompt-textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: inherit;
+      padding: 14px;
+      resize: vertical;
+      min-height: 110px;
+      outline: none;
+      transition: var(--transition-fast);
+      line-height: 1.5;
+    }
+
+    .prompt-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .preset-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .preset-pill {
+      font-size: 0.72rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .preset-pill:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(0, 242, 254, 0.05);
+    }
+
+    /* 15 Visual Styles Grid */
+    .styles-scroll-container {
+      max-height: 330px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 4px;
+    }
+
+    .styles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .style-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      user-select: none;
+    }
+
+    .style-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      background: var(--bg-card-hover);
+    }
+
+    .style-card.selected {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.12) 0%, var(--bg-card) 100%);
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.2);
+    }
+
+    .style-card.selected::before {
+      content: '✓';
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    .style-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .style-icon {
+      font-size: 1.15rem;
+    }
+
+    .style-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .style-badge {
+      font-size: 0.65rem;
+      color: var(--text-faint);
+    }
+
+    /* Settings Matrix */
+    .settings-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .select-control {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      padding: 9px 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .select-control:focus {
+      border-color: var(--primary);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .checkbox-row input {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .checkbox-label {
+      font-size: 0.82rem;
+      color: var(--text-main);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Master Action Button */
+    .btn-launch-generate {
+      width: 100%;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 40%, #7928ca 100%);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      padding: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 242, 254, 0.3);
+      transition: var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-launch-generate:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 6px 30px rgba(0, 242, 254, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-launch-generate:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+      transform: none;
+    }
+
+    /* Right Column: Video Result & Live Telemetry */
+    .result-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .result-container {
+      background: #000;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 420px;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
+    }
+
+    .video-viewport {
+      width: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+
+    .video-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-faint);
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .video-loading-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 60px 20px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .video-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(0, 242, 254, 0.15);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.9s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .video-empty-icon {
+      font-size: 3rem;
+      opacity: 0.6;
+    }
+
+    /* Progress Overlay & Bar */
+    .progress-bar-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-card);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent-magenta));
+      transition: width 0.3s ease;
+      box-shadow: 0 0 12px var(--primary);
+    }
+
+    .progress-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .progress-status-text {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Live Studio Log Console */
+    .console-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-entry {
+      color: var(--text-muted);
+      line-height: 1.4;
+      word-break: break-all;
+    }
+    .log-entry.info { color: #38bdf8; }
+    .log-entry.success { color: var(--accent-emerald); font-weight: 700; }
+    .log-entry.warn { color: var(--accent-gold); }
+    .log-entry.error { color: var(--accent-red); font-weight: 700; }
+
+    .result-actions-bar {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--text-muted);
+    }
+
+    @media (max-width: 1280px) {
+      .agents-grid { grid-template-columns: repeat(3, 1fr); }
+      .studio-workspace { grid-template-columns: 1fr; }
+    }
+    .controls-panel, .result-panel, .field-group { min-width: 0; }
+    @media (max-width: 900px) {
+      .studio-header { flex-wrap: wrap; gap: 12px; position: static; }
+      .header-status-pills { flex-wrap: wrap; }
+      .brand-group { flex-wrap: wrap; }
+    }
+    @media (max-width: 600px) {
+      .studio-header { padding: 12px; }
+      .studio-container { padding: 12px 12px 32px; }
+      .controls-panel, .result-panel, .agents-stage-section { padding: 14px; }
+      .agents-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .styles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .studio-workspace { grid-template-columns: minmax(0, 1fr); }
+      .settings-row { grid-template-columns: minmax(0, 1fr); }
+      .section-headline, .field-label { flex-wrap: wrap; gap: 8px; }
+      .select-control { width: 100%; min-width: 0; }
+      .brand-title { flex-wrap: wrap; }
+      .console-box { overflow-wrap: anywhere; }
+    }
+  </style>
+  <link rel="stylesheet" href="/static/obsidian-studio.css?v=20261002-1">
+</head>
+<body>
+
+  <!-- Top Studio Header -->
+  <header class="studio-header">
+    <div class="brand-group">
+      <div class="brand-badge-logo">OD</div>
+      <div class="brand-title">
+        OPEN DRAMA ENGINE
+        <span class="pro-tag">AI STUDIO PRO</span>
+      </div>
+    </div>
+
+    <div class="header-status-pills">
+      <div class="status-pill" id="pill-backend" title="FastAPI Master Server Status">
+        <span class="status-dot dot-green"></span>
+        <span id="review-status-text">CONTINUITY: ON</span>
+        <span id="backend-status-text">BACKEND: 7860</span>
+      </div>
+      <div class="status-pill" id="pill-gemini" title="Google Gemini 3.6/3.5 Flash Cloud Speed Engine">
+        <span class="status-dot dot-green" id="gemini-dot"></span>
+        <span id="gemini-status-text">GEMINI: FLASH ⚡</span>
+      </div>
+      <div class="status-pill" id="pill-cloud-video" title="Cloud Video Diffusion Backend (Zero VRAM)">
+        <span class="status-dot dot-green" id="cloud-video-dot"></span>
+        <span id="cloud-video-status-text">CLOUD CLIENT: INSTALLED</span>
+      </div>
+      <div class="status-pill" id="pill-comfy" title="ComfyUI Local Server Status (127.0.0.1:8188)">
+        <span class="status-dot dot-amber" id="comfy-dot"></span>
+        <span id="comfy-status-text">COMFYUI: DETECTING...</span>
+        <button id="btn-boot-comfy" onclick="bootComfyUI()" style="display:none; background: var(--primary); color: #000; border: none; font-size: 0.7rem; font-weight: 800; border-radius: var(--radius-full); padding: 3px 8px; cursor: pointer; margin-left: 6px; transition: transform 0.15s;">⚡ Boot GPU Engine</button>
+      </div>
+      <div class="status-pill" id="pill-openrouter" title="100% Free OpenRouter Model Status">
+        <span class="status-dot dot-blue"></span>
+        <span>OPENROUTER: FREE TIER</span>
+      </div>
+      <button class="status-pill btn-install" id="btn-install-desktop" onclick="handleInstallDesktop()" title="Install Open Drama Engine as a standalone Desktop Web Application">
+        <span class="status-dot dot-green"></span>
+        <span id="install-btn-text">📲 INSTALL APP</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="studio-container">
+    <section class="studio-intro" aria-label="Creator workspace">
+      <div><div class="eyebrow">Open Drama / Creator workspace</div><h1>Create your next story.</h1><p>Build a narrated story, scene by scene.</p></div>
+      <div class="finish-signature" aria-label="Obsidian studio finish"></div>
+    </section>
+
+    <!-- 6 AI AGENTS ORCHESTRATION PIPELINE -->
+    <section class="agents-stage-section">
+      <div class="section-headline">
+        <span class="section-title">⚡ Autonomous Multi-Agent Production Pipeline</span>
+        <span class="active-engine-badge" id="active-engine-badge">ORCHESTRATOR IDLE</span>
+      </div>
+
+      <div class="agents-grid">
+        <!-- 1. AI Brain -->
+        <div class="agent-card" id="agent-brain">
+          <div class="agent-top-row">
+            <span class="agent-icon-avatar">🧠</span>
+            <span class="agent-status-tag" id="status-tag-brain">IDLE</span>
+          </div>
+          <span class="agent-name">AI Brain</span>
+          <span class="agent-role">Story Conception & Seed</span>
+          <span class="agent-activity" id="activity-brain">Awaiting production launch...</span>
+        </div>
+
+        <!-- 2. Writer -->
+        <div class="agent-card" id="agent-writer">
+          <div class="agent-top-row">
+            <span class="agent-icon-avatar">✍️</span>
+            <span class="agent-status-tag" id="status-tag-writer">IDLE</span>
+          </div>
+          <span class="agent-name">Writer</span>
+          <span class="agent-role">Scene & Beat Breakdown</span>
+          <span class="agent-activity" id="activity-writer">Awaiting story prompt...</span>
+        </div>
+
+        <!-- 3. Artist -->
+        <div class="agent-card" id="agent-artist">
+          <div class="agent-top-row">
+            <span class="agent-icon-avatar">🎨</span>
+            <span class="agent-status-tag" id="status-tag-artist">IDLE</span>
+          </div>
+          <span class="agent-name">Artist</span>
+          <span class="agent-role">15 Visual Styles Injector</span>
+          <span class="agent-activity" id="activity-artist">Style preset primed...</span>
+        </div>
+
+        <!-- 4. Director -->
+        <div class="agent-card" id="agent-director">
+          <div class="agent-top-row">
+            <span class="agent-icon-avatar">🎬</span>
+            <span class="agent-status-tag" id="status-tag-director">IDLE</span>
+          </div>
+          <span class="agent-name">Director</span>
+          <span class="agent-role">ComfyUI SD 1.5 Render</span>
+          <span class="agent-activity" id="activity-director">AnimateDiff engine standby...</span>
+        </div>
+
+        <!-- 5. Voice -->
+        <div class="agent-card" id="agent-voice">
+          <div class="agent-top-row">
+            <span class="agent-icon-avatar">🎙️</span>
+            <span class="agent-status-tag" id="status-tag-voice">IDLE</span>
+          </div>
+          <span class="agent-name">Voice</span>
+          <span class="agent-role">Soundtrack & Audio Mix</span>
+          <span class="agent-activity" id="activity-voice">Audio ducking track ready...</span>
+        </div>
+
+        <!-- 6. Composer -->
+        <div class="agent-card" id="agent-composer">
+          <div class="agent-top-row">
+            <span class="agent-icon-avatar">🎼</span>
+            <span class="agent-status-tag" id="status-tag-composer">IDLE</span>
+          </div>
+          <span class="agent-name">Composer</span>
+          <span class="agent-role">Final Film Assembly</span>
+          <span class="agent-activity" id="activity-composer">Awaiting rendered clips...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAIN TWO-COLUMN STUDIO WORKSPACE -->
+    <main class="studio-workspace">
+
+      <!-- LEFT: Director Studio Controls -->
+      <aside class="controls-panel">
+        
+        <!-- AI Script Engine & Speed Selector -->
+        <div class="field-group">
+          <div class="field-label">
+            <span>⚡ AI Script Engine</span>
+            <span style="font-size: 0.72rem; color: var(--primary);">Cloud Speed + Free Fallbacks</span>
+          </div>
+          <select id="engine-select" class="select-control" style="border-color: rgba(0, 242, 254, 0.4);">
+            <option value="auto" selected>Auto — OpenRouter, then Gemini</option>
+            <option value="gemini">Google Gemini — configured API key</option>
+            <option value="openrouter">OpenRouter — free model by default</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="production-mode">Story format</label>
+          <select id="production-mode" class="select-control" onchange="updateStoryMode()">
+            <option value="story" selected>Continuity-checked illustrated anime story</option>
+            <option value="motion" disabled>Motion animation — unavailable until continuity is supported</option>
+          </select>
+          <div id="story-mode-note" style="font-size: .8rem; line-height: 1.5; color: var(--text-faint); margin-top: 8px;">Creates an illustrated screenplay, checked scene art, Windows narration, and an MP4. Longer episodes take longer to render. Structured review checks story consistency. Visual identity is reviewed against a fixed reference. Every scene begins with the exact previous final frame. Uses your existing writer and vision models; no Typesafe key is required.</div>
+          <label style="margin-top: 8px;"><input id="include-subtitles" type="checkbox" checked> Include selectable narration subtitles</label>
+        </div>
+        <!-- 🎬 Video Diffusion Backend (Zero VRAM / Cloud Offloading) -->
+        <div class="field-group">
+          <div class="field-label">
+            <span>Motion short engine</span>
+            <span style="font-size: 0.72rem; color: var(--accent-emerald);">Motion shorts only</span>
+          </div>
+          <select id="video-backend-select" class="select-control" style="border-color: rgba(16, 185, 129, 0.4);" onchange="toggleCustomUrlInput()">
+            <option value="auto">Local ComfyUI</option>
+            <option value="local" selected>Local ComfyUI — uses your installed models</option>
+            <option value="cloud">Cloud Gradio video — availability and quotas vary</option>
+            <option value="custom">Custom compatible Gradio video endpoint</option>
+          </select>
+          <div id="custom-url-container" style="display: none; margin-top: 6px;">
+            <input type="text" id="custom-video-url" class="prompt-textarea" style="min-height: 38px; height: 38px; padding: 8px 12px; font-size: 0.8rem; font-family: 'JetBrains Mono';" placeholder="e.g. https://your-colab-tunnel.trycloudflare.com">
+          </div>
+        </div>
+
+        <!-- 🎭 ToonBee Feature: Character Anchor Sheet -->
+        <div class="field-group">
+          <div class="field-label">
+            <span>Main character description</span>
+            <span style="font-size: 0.72rem; color: var(--accent-gold);">Recurring Character Description</span>
+          </div>
+          <input type="text" id="character-anchor" class="prompt-textarea" style="min-height: 44px; height: 44px; padding: 10px 14px; font-size: 0.88rem;" placeholder="e.g. Little blue robot with round brass goggles and red scarf" value="Little blue metallic robot with round brass goggles and a red scarf">
+          <div class="preset-pills-row">
+            <span class="preset-pill" onclick="setCharacter('Little blue metallic robot with round brass goggles and red scarf')">🤖 Blue Robot</span>
+            <span class="preset-pill" onclick="setCharacter('Brave 10-year-old girl with curly red hair, freckles, wearing green aviator jacket')">👧 Red-Haired Explorer</span>
+            <span class="preset-pill" onclick="setCharacter('Fluffy orange tabby wizard cat wearing miniature starry purple robe and pointy hat')">🐱 Wizard Cat</span>
+            <span class="preset-pill" onclick="setCharacter('Gentle clockwork brass golem with glowing amber eye crystals')">⚙️ Brass Golem</span>
+          </div>
+        </div>
+
+        <!-- Story Prompt Input -->
+        <div class="field-group">
+          <div class="field-label">
+            <span>📝 Story Prompt</span>
+            <span style="font-size: 0.72rem; color: var(--primary);">Multi-Scene Screenplay</span>
+          </div>
+          <div class="textarea-container">
+            <textarea id="story-prompt" class="prompt-textarea" placeholder="Describe the animated story you want to create...">The brave robot stumbles upon an ancient glowing crystal hidden deep inside an enchanted clockwork forest, awakening ancient mechanical butterflies.</textarea>
+          </div>
+          <div class="preset-pills-row">
+            <span class="preset-pill" onclick="setPrompt('The robot discovers an ancient crystal temple hidden beneath mossy roots and touches the glowing altar')">💎 Crystal Temple</span>
+            <span class="preset-pill" onclick="setPrompt('Cyberpunk cat with neon blue eyes prowling rain-soaked Night City rooftops')">🐱 Cyberpunk Cat</span>
+            <span class="preset-pill" onclick="setPrompt('A magical floating island powered by giant glowing crystal engines in the sky')">🏰 Sky Castle</span>
+            <span class="preset-pill" onclick="setPrompt('Charming claymation bakery where fresh croissants come alive at midnight')">🥐 Clay Bakery</span>
+          </div>
+        </div>
+
+        <!-- 15 Visual Styles Selector -->
+        <div class="field-group">
+          <div class="field-label">
+            <span>🎨 Visual Style (<span id="style-count-label">15</span> Styles)</span>
+            <span id="selected-style-label" style="color: var(--primary); font-family: 'JetBrains Mono';">Anime</span>
+          </div>
+
+          <div class="styles-scroll-container">
+            <div class="styles-grid" id="styles-grid">
+              <!-- Dynamically populated style cards -->
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-resume" class="btn-secondary" style="display:none" onclick="resumeLastStory()">Resume last interrupted story</button>
+        <!-- Video & Camera Settings -->
+        <div class="settings-row">
+          <div class="field-group">
+            <label class="field-label" for="duration-select">⏱️ Duration</label>
+            <select id="duration-select" class="select-control">
+              <option value="15">15 seconds — test story</option>
+              <option value="60">1 minute — social story</option>
+              <option value="180">3 minutes — short story</option>
+              <option value="300" selected>5 minutes — creator story</option>
+              <option value="600">10 minutes — full story</option>
+              <option value="1200">20 minutes — episode</option>
+              <option value="1500">25 minutes — episode</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="aspect-select">📐 Aspect Ratio</label>
+            <select id="aspect-select" class="select-control">
+              <option value="16:9" selected>16:9 Widescreen (Landscape)</option>
+              <option value="9:16">9:16 Vertical (TikTok/Reels)</option>
+              <option value="1:1">1:1 Square (Instagram Feed)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="field-group">
+            <label class="field-label" for="resolution-select">Export resolution</label>
+            <select id="resolution-select" class="select-control">
+              <option value="Standard (512p)">Standard — smaller, faster export</option>
+              <option value="HD (720p)" selected>HD (720p)</option>
+            </select>
+          </div>
+
+          <div class="field-group" style="justify-content: flex-end;">
+            <div style="font-size: 0.78rem; color: var(--accent-emerald); display: flex; align-items: center; gap: 6px; padding: 10px 14px; font-weight: 600;">
+              <span>✨</span>
+              <span>Narration + downloadable script and subtitles</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Launch Generation Button -->
+        <button id="btn-generate" class="btn-launch-generate" onclick="launchProduction()">
+          <span id="btn-generate-icon">🎬</span>
+          <span id="btn-generate-text">LAUNCH AI PRODUCTION</span>
+        </button>
+
+      </aside>
+
+      <!-- RIGHT: Master Video Monitor & Production Console -->
+      <section class="result-panel">
+        
+        <div class="field-label">
+          <span>📽️ Master Story Monitor</span>
+          <span id="monitor-badge" style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--text-faint);">STANDBY</span>
+        </div>
+
+        <!-- Video Result Container -->
+        <div class="result-container" id="result-container">
+          <div class="video-empty-state" id="video-empty-placeholder">
+            <div class="video-empty-icon">🎞️</div>
+            <div style="font-weight: 700; color: var(--text-main);">No Video Rendered Yet</div>
+            <div style="font-size: 0.85rem; max-width: 320px;">Pick a style, type your story idea, and click "Launch AI Production" to generate your film.</div>
+          </div>
+
+          <!-- Cloud / Local Video Rendering State Overlay -->
+          <div class="video-loading-state" id="video-loading-overlay">
+            <div class="video-spinner"></div>
+            <div style="font-weight: 700; font-size: 1rem; color: var(--text-main); margin-top: 4px;" id="video-loading-title">Diffusing Cloud Video Frames...</div>
+            <div style="font-size: 0.82rem; color: var(--primary); font-family: 'JetBrains Mono', monospace;" id="video-loading-status">Streaming clips from Cloud Space (0% VRAM)</div>
+            <div style="font-size: 0.75rem; color: var(--text-faint); margin-top: 6px;">Scene art, narration, subtitles, and a verified MP4 export</div>
+          </div>
+
+          <!-- Native HTML5 Video Element pointing to master_story.mp4 -->
+          <video id="master-video" class="video-viewport" controls style="display: none;" preload="auto">
+            <source id="video-source" src="/generated_assets/master_story.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
+        <!-- Progress Tracking Bar -->
+        <div class="field-group">
+          <div class="progress-meta-row">
+            <span class="progress-status-text" id="progress-status-text">Production Idle</span>
+            <span id="progress-percent" style="color: var(--text-muted);">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+          </div>
+        </div>
+
+        <!-- Live Studio Terminal Log -->
+        <div class="field-group">
+          <div class="field-label">
+            <span>📟 Live Production Console</span>
+            <span style="font-size: 0.72rem; color: var(--text-faint);">Real-Time SSE Feed</span>
+          </div>
+          <div class="console-box" id="console-box">
+            <div class="log-entry info">[ODE System] Open Drama Engine AI Studio Pro initialized.</div>
+            <div class="log-entry info">[ODE System] OpenRouter Free tier and ComfyUI AnimateDiff ready.</div>
+          </div>
+        </div>
+
+        <!-- Result Action Buttons -->
+        <div class="result-actions-bar">
+          <a id="btn-script" class="btn-secondary" style="display:none" download="script.txt">Download script</a>
+          <a id="btn-subtitles" class="btn-secondary" style="display:none" download="subtitles.srt">Download subtitles</a>
+          <a id="btn-download" href="/generated_assets/master_story.mp4" download="master_story.mp4" class="btn-secondary" style="display: none;">
+            <span>📥</span> Download Master Film (.mp4)
+          </a>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <script>
+    // Selected style variable
+    let currentSelectedStyle = "Anime";
+    let activeJobId = null;
+    let isGenerating = false;
+
+    // 15 Style Presets Array
+    const STYLES_DATA = [
+      { name: "Disney 3.0", icon: "✨", badge: "Magic & Family" },
+      { name: "Anime", icon: "⚡", badge: "Action Shonen" },
+      { name: "3D Cartoon", icon: "🧸", badge: "Playful Clay" },
+      { name: "Realistic", icon: "🎥", badge: "Cinematic 35mm" },
+      { name: "Cyberpunk 2077", icon: "🏙️", badge: "Sci-Fi Neon" },
+      { name: "Retro 80s Synthwave", icon: "📼", badge: "Outrun VHS" },
+      { name: "Pixel Art 16-Bit", icon: "👾", badge: "SNES Arcade" },
+      { name: "Claymation", icon: "🧱", badge: "Stop-Motion" },
+      { name: "Comic Book", icon: "💥", badge: "Graphic Novel" },
+      { name: "Dark Fantasy", icon: "⚔️", badge: "Elden Lore" },
+      { name: "Pixar Studio 3D", icon: "🎈", badge: "Heartwarming" },
+      { name: "Watercolor Storybook", icon: "🎨", badge: "Fable Art" },
+      { name: "Noir Detective", icon: "🕵️", badge: "Film Noir B&W" },
+      { name: "Studio Ghibli", icon: "🍃", badge: "Pastoral Warmth" },
+      { name: "Steampunk Victorian", icon: "⚙️", badge: "Clockwork" }
+    ];
+
+    // Render 15 Style Cards
+    function renderStyleCards() {
+      const container = document.getElementById("styles-grid");
+      container.innerHTML = "";
+      STYLES_DATA.forEach(s => {
+        const card = document.createElement("div");
+        card.className = `style-card ${s.name === currentSelectedStyle ? "selected" : ""}`;
+        card.onclick = () => selectStyle(s.name);
+        card.setAttribute("role", "button");
+        card.tabIndex = 0;
+        card.setAttribute("aria-pressed", String(s.name === currentSelectedStyle));
+        card.onkeydown = event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectStyle(s.name);
+          }
+        };
+        card.innerHTML = `
+          <div class="style-header">
+            <span class="style-icon">${s.icon}</span>
+            <span class="style-title">${s.name}</span>
+          </div>
+          <span class="style-badge">${s.badge}</span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectStyle(styleName) {
+      currentSelectedStyle = styleName;
+      document.getElementById("selected-style-label").textContent = styleName;
+      document.querySelectorAll(".style-card").forEach(el => {
+        const title = el.querySelector(".style-title")?.textContent;
+        el.setAttribute("aria-pressed", String(title === styleName));
+        if (title === styleName) {
+          el.classList.add("selected");
+        } else {
+          el.classList.remove("selected");
+        }
+      });
+      addLog(`[Director] Selected Visual Style: ${styleName}`, "info");
+    }
+
+    function setPrompt(text) {
+      document.getElementById("story-prompt").value = text;
+    }
+
+    function setCharacter(text) {
+      const input = document.getElementById("character-anchor");
+      if (input) {
+        input.value = text;
+        addLog(`[ToonBee Engine] Locked Character Anchor: "${text}"`, "success");
+      }
+    }
+
+    function addLog(msg, type = "normal") {
+      const box = document.getElementById("console-box");
+      const entry = document.createElement("div");
+      entry.className = `log-entry ${type}`;
+      const time = new Date().toLocaleTimeString();
+      entry.textContent = `[${time}] ${msg}`;
+      box.appendChild(entry);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function updateAgentCard(agentId, status, activityText) {
+      const card = document.getElementById(`agent-${agentId}`);
+      const tag = document.getElementById(`status-tag-${agentId}`);
+      const act = document.getElementById(`activity-${agentId}`);
+
+      if (!card || !tag || !act) return;
+
+      card.classList.remove("active", "completed");
+      if (status === "active") {
+        card.classList.add("active");
+        tag.textContent = "THINKING...";
+      } else if (status === "completed") {
+        card.classList.add("completed");
+        tag.textContent = "DONE ✓";
+      } else {
+        tag.textContent = "IDLE";
+      }
+
+      if (activityText) {
+        act.textContent = activityText;
+      }
+    }
+
+    function resetAgents() {
+      const agents = ["brain", "writer", "artist", "director", "voice", "composer"];
+      agents.forEach(a => updateAgentCard(a, "idle", "Awaiting production queue..."));
+    }
+
+    function toggleCustomUrlInput() {
+      const backend = document.getElementById("video-backend-select")?.value;
+      const container = document.getElementById("custom-url-container");
+      if (container) {
+        container.style.display = (backend === "custom") ? "block" : "none";
+      }
+    }
+
+    // Check Backend & ComfyUI Status on Load
+    async function checkServerStatus() {
+      try {
+        const res = await fetch("/api/status");
+        if (res.ok) {
+          const data = await res.json();
+          const comfyOnline = data.comfyui_online;
+          const comfyDot = document.getElementById("comfy-dot");
+          const comfyText = document.getElementById("comfy-status-text");
+
+          document.getElementById("review-status-text").textContent = "CONTINUITY: ON";
+          document.getElementById("review-status-text").style.color = "var(--success)";
+          const geminiConfigured = data.gemini_configured;
+          const geminiDot = document.getElementById("gemini-dot");
+          const geminiText = document.getElementById("gemini-status-text");
+
+          if (geminiConfigured) {
+            geminiDot.className = "status-dot dot-green";
+            geminiText.textContent = "GEMINI: KEY SET";
+            addLog("[Gemini] Gemini API key configured; availability checked during writing", "success");
+          } else {
+            geminiDot.className = "status-dot dot-amber";
+            geminiText.textContent = "GEMINI: OFF";
+          }
+
+          // Cloud Video Diffusion Status
+          const cloudVideoDot = document.getElementById("cloud-video-dot");
+          const cloudVideoText = document.getElementById("cloud-video-status-text");
+          if (cloudVideoDot && cloudVideoText) {
+            if (data.cloud_video_available) {
+              cloudVideoDot.className = "status-dot dot-green";
+              cloudVideoText.textContent = "CLOUD CLIENT: INSTALLED";
+              addLog("[Cloud Video] Cloud video client installed; endpoint availability is checked during rendering", "success");
+            } else {
+              cloudVideoDot.className = "status-dot dot-amber";
+              cloudVideoText.textContent = "CLOUD VIDEO: STANDBY";
+            }
+          }
+
+          const bootBtn = document.getElementById("btn-boot-comfy");
+          if (comfyOnline) {
+            comfyDot.className = "status-dot dot-green";
+            comfyText.textContent = "COMFYUI: ONLINE (8188)";
+            if (bootBtn) bootBtn.style.display = "none";
+            addLog("[ComfyUI] Local scene-art engine is online", "success");
+          } else {
+            comfyDot.className = "status-dot dot-amber";
+            comfyText.textContent = "COMFYUI: OFFLINE";
+            if (bootBtn) bootBtn.style.display = "inline-block";
+            addLog("[ComfyUI] Local scene-art engine is offline. It will be started when production begins.", "info");
+          }
+        }
+      } catch (err) {
+        addLog("[Backend] Server status check pending...", "warn");
+      }
+    }
+
+    async function bootComfyUI() {
+      const bootBtn = document.getElementById("btn-boot-comfy");
+      if (bootBtn) {
+        bootBtn.disabled = true;
+        bootBtn.textContent = "⏳ Booting...";
+      }
+      addLog("[ComfyUI] Booting local GPU Render Engine in background...", "info");
+      try {
+        const res = await fetch("/api/start-comfy", { method: "POST" });
+        const data = await res.json();
+        addLog(`[ComfyUI] ${data.message}`, "success");
+        // Poll status every 3s
+        let attempts = 0;
+        const interval = setInterval(async () => {
+          attempts++;
+          const checkRes = await fetch("/api/status");
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            if (checkData.comfyui_online) {
+              clearInterval(interval);
+              checkServerStatus();
+              addLog("[ComfyUI] Render Engine is now ONLINE and ready for cartoon production!", "success");
+            }
+          }
+          if (attempts > 15) clearInterval(interval);
+        }, 3000);
+      } catch (err) {
+        addLog(`[ComfyUI Boot Error] ${err.message}`, "error");
+        if (bootBtn) {
+          bootBtn.disabled = false;
+          bootBtn.textContent = "⚡ Boot GPU Engine";
+        }
+      }
+    }
+
+    // Launch End-to-End Production
+    async function launchProduction() {
+      if (isGenerating) return;
+
+      const prompt = document.getElementById("story-prompt").value.trim();
+      if (!prompt) {
+        alert("Please enter a story prompt!");
+        return;
+      }
+
+      const duration = parseInt(document.getElementById("duration-select").value);
+      const aspect = document.getElementById("aspect-select").value;
+      const resolution = document.getElementById("resolution-select").value;
+      const characterAnchor = (document.getElementById("character-anchor")?.value || "").trim();
+      const engineProvider = (document.getElementById("engine-select")?.value || "auto").trim();
+      const videoBackend = (document.getElementById("video-backend-select")?.value || "auto").trim();
+      const customVideoUrl = (document.getElementById("custom-video-url")?.value || "").trim();
+
+      // Lock UI
+      isGenerating = true;
+      const btn = document.getElementById("btn-generate");
+      const btnText = document.getElementById("btn-generate-text");
+      const btnIcon = document.getElementById("btn-generate-icon");
+      btn.disabled = true;
+      btnText.textContent = "PRODUCING FILM...";
+      btnIcon.textContent = "⏳";
+      document.getElementById("active-engine-badge").textContent = "PIPELINE ACTIVE";
+      document.getElementById("monitor-badge").textContent = "GENERATING...";
+
+      // Reset & show loading state in monitor
+      const placeholder = document.getElementById("video-empty-placeholder");
+      const loadingOverlay = document.getElementById("video-loading-overlay");
+      const masterVideo = document.getElementById("master-video");
+      if (placeholder) placeholder.style.display = "none";
+      if (masterVideo) masterVideo.style.display = "none";
+      if (loadingOverlay) {
+        loadingOverlay.style.display = "flex";
+        const loadingTitle = document.getElementById("video-loading-title");
+        const loadingStatus = document.getElementById("video-loading-status");
+        if (loadingTitle) {
+          loadingTitle.textContent = videoBackend === "cloud" ? "Diffusing Cloud Video Frames..." : "Rendering Video Frames...";
+        }
+        if (loadingStatus) {
+          loadingStatus.textContent = videoBackend === "cloud" ? "Streaming from Free Cloud Space (0% VRAM)..." : "Rendering video pipeline...";
+        }
+      }
+
+      resetAgents();
+      document.getElementById("progress-bar-fill").style.width = "5%";
+      document.getElementById("progress-percent").textContent = "5%";
+      document.getElementById("progress-status-text").textContent = "Initiating Multi-Agent Pipeline...";
+      addLog(`[Production] Starting film production: "${prompt.slice(0, 40)}..."`, "info");
+      if (characterAnchor) addLog(`[ToonBee Engine] Character Anchor active: "${characterAnchor}"`, "success");
+      addLog(`[Production] Style: ${currentSelectedStyle} | Duration: ${duration}s | Engine: ${engineProvider} | Video: ${videoBackend.toUpperCase()}`, "info");
+
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: prompt,
+            style: currentSelectedStyle,
+            duration: duration,
+            aspect_ratio: aspect,
+            resolution: resolution,
+            include_subtitles: document.getElementById("include-subtitles").checked,
+            production_mode: document.getElementById("production-mode").value,
+            character_anchor: characterAnchor,
+            engine_provider: engineProvider,
+            video_backend: videoBackend,
+            custom_video_url: customVideoUrl
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail));
+        }
+
+        const data = await response.json();
+        const jobId = data.job_id;
+        activeJobId = jobId;
+        localStorage.setItem("ode-last-job", jobId);
+        addLog(`[Orchestrator] Production Job Created: ${jobId}`, "info");
+
+        // Connect to Real-Time SSE Progress Stream
+        listenToJobStream(jobId);
+
+      } catch (err) {
+        addLog(`[Error] Production failed: ${err.message}`, "error");
+        finishProduction(false);
+      }
+    }
+
+    function listenToJobStream(jobId) {
+      const eventSource = new EventSource(`/api/stream/${jobId}`);
+
+      eventSource.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        const percent = msg.percent || 0;
+        document.getElementById("progress-bar-fill").style.width = `${percent}%`;
+        document.getElementById("progress-percent").textContent = `${percent}%`;
+        document.getElementById("progress-status-text").textContent = msg.status_text || "Processing...";
+
+        // Update video monitor loading text
+        const loadingStatus = document.getElementById("video-loading-status");
+        if (loadingStatus && msg.status_text) {
+          loadingStatus.textContent = msg.status_text;
+        }
+
+        if (msg.log) {
+          addLog(msg.log, msg.log_type || "normal");
+        }
+
+        // Activate or complete agent cards based on stage
+        if (msg.active_agent) {
+          updateAgentCard(msg.active_agent, "active", msg.agent_activity);
+        }
+        if (msg.completed_agents && Array.isArray(msg.completed_agents)) {
+          msg.completed_agents.forEach(a => updateAgentCard(a, "completed", "Stage complete"));
+        }
+
+        // Final Master Video Complete
+        if (msg.done) {
+          eventSource.close();
+          addLog("[Orchestrator] Master Story Film Ready!", "success");
+          displayMasterVideo(msg.video_url);
+          document.getElementById("monitor-badge").textContent = `${msg.result?.resolution || "MP4"} · ${Math.round(msg.result?.duration || 0)} seconds`;
+          for (const [id, url] of [["btn-script", msg.script_url], ["btn-subtitles", msg.subtitles_url]]) {
+            const link = document.getElementById(id);
+            if (url) { link.href = url; link.style.display = "inline-flex"; }
+          }
+          document.getElementById("btn-resume").style.display = "none";
+          finishProduction(true);
+        }
+
+        if (msg.error) {
+          eventSource.close();
+          addLog(`[Orchestrator Error] ${msg.error}`, "error");
+          finishProduction(false);
+          document.getElementById("btn-resume").style.display = "inline-flex";
+        }
+      };
+
+      eventSource.onerror = () => {
+        // EventSource reconnects automatically; never display an unrelated older film.
+        document.getElementById("progress-status-text").textContent = "Reconnecting to this story's progress...";
+      };
+    }
+
+    function updateStoryMode() {
+      const story = document.getElementById("production-mode").value === "story";
+      document.getElementById("video-backend-select").disabled = story;
+      document.getElementById("story-mode-note").textContent = story
+        ? "Continuity-reviewed screenplay, fixed character reference, visual identity checks, exact frame handoffs, narration and selectable subtitles. Illustrated scenes transition between checked images; this is not full character animation. Uses your existing writer and vision models; no Typesafe key is required."
+        : "Generates short motion clips and loops them under narration. Limited to 60 seconds; motion and cloud availability depend on your engine.";
+    }
+
+    async function resumeLastStory() {
+      const id = activeJobId || localStorage.getItem("ode-last-job");
+      if (!id) return;
+      try {
+        const response = await fetch(`/api/jobs/${id}/resume`, { method: "POST" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Could not resume story");
+        activeJobId = id;
+        isGenerating = true;
+        document.getElementById("btn-generate").disabled = true;
+        document.getElementById("btn-resume").style.display = "none";
+        listenToJobStream(id);
+      } catch (error) { addLog(error.message, "error"); }
+    }
+
+    async function restoreLastStory() {
+      const id = localStorage.getItem("ode-last-job");
+      if (!id) return;
+      try {
+        const response = await fetch(`/api/jobs/${id}`);
+        if (!response.ok) return;
+        const state = await response.json();
+        activeJobId = id;
+        if (state.error) {
+          document.getElementById("btn-resume").style.display = "inline-flex";
+          addLog(state.error, "error");
+        } else {
+          if (!state.done) { isGenerating = true; document.getElementById("btn-generate").disabled = true; }
+          listenToJobStream(id);
+        }
+      } catch (error) { addLog("Last story will be available when the server reconnects.", "info"); }
+    }
+
+    function displayMasterVideo(videoUrl) {
+      const placeholder = document.getElementById("video-empty-placeholder");
+      const loadingOverlay = document.getElementById("video-loading-overlay");
+      const video = document.getElementById("master-video");
+      const source = document.getElementById("video-source");
+      const downloadBtn = document.getElementById("btn-download");
+
+      // Timestamp bust cache
+      const cacheBustUrl = `${videoUrl}${videoUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      source.src = cacheBustUrl;
+      video.load();
+
+      if (loadingOverlay) loadingOverlay.style.display = "none";
+      if (placeholder) placeholder.style.display = "none";
+      video.style.display = "block";
+      downloadBtn.href = cacheBustUrl;
+      downloadBtn.style.display = "inline-flex";
+
+      document.getElementById("monitor-badge").textContent = "MASTER READY (H264 + narration)";
+      document.getElementById("monitor-badge").style.color = "var(--accent-emerald)";
+
+      video.play().catch(() => {
+        // Autoplay may be restricted by browser until user click
+      });
+    }
+
+    function finishProduction(success) {
+      isGenerating = false;
+      const btn = document.getElementById("btn-generate");
+      const btnText = document.getElementById("btn-generate-text");
+      const btnIcon = document.getElementById("btn-generate-icon");
+      btn.disabled = false;
+      btnText.textContent = "LAUNCH AI PRODUCTION";
+      btnIcon.textContent = "🎬";
+      document.getElementById("active-engine-badge").textContent = success ? "PRODUCTION COMPLETE" : "IDLE / RETRY";
+
+      if (!success) {
+        document.getElementById("monitor-badge").textContent = "PRODUCTION FAILED — REVIEW LOG";
+        const loadingOverlay = document.getElementById("video-loading-overlay");
+        const placeholder = document.getElementById("video-empty-placeholder");
+        const masterVideo = document.getElementById("master-video");
+        if (loadingOverlay) loadingOverlay.style.display = "none";
+        if (masterVideo && masterVideo.style.display !== "block" && placeholder) {
+          placeholder.style.display = "flex";
+        }
+      }
+    }
+
+    // PWA & Desktop Web Application Installation
+    let deferredPwaPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPwaPrompt = e;
+      const installBtn = document.getElementById("btn-install-desktop");
+      if (installBtn) {
+        installBtn.style.display = "inline-flex";
+      }
+    });
+
+    async function handleInstallDesktop() {
+      const installBtnText = document.getElementById("install-btn-text");
+      const originalText = installBtnText ? installBtnText.textContent : "📲 INSTALL APP";
+      if (installBtnText) installBtnText.textContent = "⏳ INSTALLING...";
+
+      // 1. If native browser PWA prompt is ready, trigger it
+      if (deferredPwaPrompt) {
+        try {
+          deferredPwaPrompt.prompt();
+          const { outcome } = await deferredPwaPrompt.userChoice;
+          if (outcome === "accepted") {
+            addLog("[Desktop App] PWA Web Application installed successfully!", "success");
+            if (installBtnText) installBtnText.textContent = "✅ INSTALLED";
+            deferredPwaPrompt = null;
+            return;
+          }
+        } catch (err) {
+          console.warn("PWA prompt error, falling back to desktop shortcut installer:", err);
+        }
+      }
+
+      // 2. Direct / Fallback: Trigger backend Windows Desktop shortcut installer
+      try {
+        const resp = await fetch("/api/install-desktop", { method: "POST" });
+        const data = await resp.json();
+        if (resp.ok && data.status === "success") {
+          addLog(`[Desktop App] Desktop shortcut installed: ${data.shortcut_path}`, "success");
+          if (installBtnText) installBtnText.textContent = "✅ ON DESKTOP";
+          alert("Open Drama Engine Desktop Application installed!\n\nA dedicated shortcut 'Open Drama Engine' has been placed on your Desktop.\n\nLaunching it will auto-start the background server and open the app window.");
+        } else {
+          addLog(`[Desktop App Error] ${data.message}`, "error");
+          if (installBtnText) installBtnText.textContent = "❌ RETRY";
+          setTimeout(() => { if (installBtnText) installBtnText.textContent = originalText; }, 3000);
+        }
+      } catch (err) {
+        addLog(`[Desktop App Error] Connection failed: ${err.message}`, "error");
+        if (installBtnText) installBtnText.textContent = "❌ RETRY";
+        setTimeout(() => { if (installBtnText) installBtnText.textContent = originalText; }, 3000);
+      }
+    }
+
+    // Register Service Worker for PWA compliance
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").then((reg) => {
+          console.log("[PWA] ServiceWorker registered successfully, scope:", reg.scope);
+        }).catch((err) => {
+          console.log("[PWA] ServiceWorker registration skipped or unsupported:", err);
+        });
+      });
+    }
+
+    // Init on page ready
+    window.addEventListener("DOMContentLoaded", () => {
+      renderStyleCards();
+      checkServerStatus();
+      updateStoryMode();
+      restoreLastStory();
+    });
+  </script>
+</body>
+</html>

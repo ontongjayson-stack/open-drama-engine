@@ -1,14 +1,14 @@
 /**
  * Open Drama Engine — Local Backend Worker Server (server.js)
  * Listens on http://127.0.0.1:7860
- * Pure Gradio Backend API Server (/config, /info, /api/predict, /call/predict, /run/predict, /api/generate, /api/generate-script, /api/check-weights, /api/download-weights, /file=)
+ * Pure Gradio Backend API Server (/config, /info, /api/predict, /call/predict, /run/predict, /api/generate, /api/generate-script, /api/refine-shot, /api/check-weights, /api/download-weights, /file=)
  * Integrates omnirouter.py and render_engine.py via engine_bridge.py
  */
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process');
 
 const PORT = process.env.PORT || 7860;
 const HOST = '127.0.0.1';
@@ -93,7 +93,7 @@ const server = http.createServer((req, res) => {
       app_id: 'wan2gp-ai-render-suite',
       info: 'Open Drama Engine Wan2GP Gradio Backend API Server',
       status: 'online',
-      endpoints: ['/config', '/info', '/api/predict', '/call/predict', '/run/predict', '/api/generate', '/api/generate-script', '/api/check-weights', '/api/download-weights', '/api/status', '/api/render-sequence', '/file=']
+      endpoints: ['/config', '/info', '/api/predict', '/call/predict', '/run/predict', '/api/generate', '/api/generate-script', '/api/refine-shot', '/api/check-weights', '/api/download-weights', '/api/status', '/api/render-sequence', '/file=']
     }));
     return;
   }
@@ -195,6 +195,76 @@ const server = http.createServer((req, res) => {
           }
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(result));
+        });
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
+      }
+    });
+    return;
+  }
+
+  // 3b. Shot Refinement Endpoint (/api/refine-shot) - Hits Gemini Prompt Cache
+  if (url === '/api/refine-shot' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const { shotId, tweakInstruction } = payload;
+        console.log(`⚡ Processing Shot Refinement Request for Shot ${shotId}:`, tweakInstruction);
+
+        runEngineBridge('refine_shot', payload, (err, result) => {
+          if (err || !result) {
+            console.warn('[Server] Shot refinement error:', err);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err ? err.error : 'Shot refinement failed' }));
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        });
+      } catch (err) {
+        console.warn('[Server] Error handling /api/refine-shot:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
+      }
+    });
+    return;
+  }
+
+  // 3c. Headless Studio Orchestrator Endpoint (/api/orchestrate)
+  if (url === '/api/orchestrate' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        console.log('🎬 Processing Headless Studio Orchestrator Request:', payload);
+
+        runEngineBridge('orchestrate', payload, (err, result) => {
+          if (err || !result || !result.success) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err ? err.error : 'Headless orchestration failed' }));
+            return;
+          }
+          const relPath = path.relative(__dirname, result.output_path).replace(/\\/g, '/');
+          const finalUrl = `http://${HOST}:${PORT}/${relPath}`;
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: true,
+            output_path: result.output_path,
+            url: finalUrl,
+            duration: result.duration,
+            resolution: result.resolution,
+            timeline_json: result.timeline_json
+          }));
         });
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });

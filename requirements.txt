@@ -1,0 +1,11 @@
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pydantic>=2.7,<3
+requests>=2.32,<3
+Pillow>=10.4,<13
+numpy>=1.26,<3
+python-dotenv>=1,<2
+moviepy>=2.2,<3
+librosa>=0.10,<1
+gradio-client>=2,<3
+google-genai>=1,<3

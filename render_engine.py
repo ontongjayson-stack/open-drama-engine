@@ -82,8 +82,6 @@ class RenderEngine:
     def apply_cinematic_overlays(
         self,
         pil_img,
-        title_text="",
-        subtitle_text="",
         add_vignette=True,
         add_film_grain=True,
         add_letterbox=True,
@@ -91,7 +89,7 @@ class RenderEngine:
     ):
         """
         Applies aesthetic cinematic filters: radial vignette, film grain texture,
-        widescreen letterboxing, and stylized text metadata.
+        and widescreen letterboxing without any text or prompt overlays.
         """
         img = pil_img.convert("RGB")
         w, h = img.size
@@ -111,20 +109,6 @@ class RenderEngine:
             bar_height = int(h * letterbox_ratio)
             draw.rectangle([0, 0, w, bar_height], fill=(0, 0, 0))
             draw.rectangle([0, h - bar_height, w, h], fill=(0, 0, 0))
-
-        # 4. Text & Metadata Overlay
-        if title_text or subtitle_text:
-            try:
-                font_title = ImageFont.truetype("arial.ttf", int(h * 0.04))
-                font_sub = ImageFont.truetype("arial.ttf", int(h * 0.025))
-            except IOError:
-                font_title = ImageFont.load_default()
-                font_sub = ImageFont.load_default()
-
-            if title_text:
-                draw.text((int(w * 0.05), int(h * 0.82)), title_text, fill=(255, 255, 255), font=font_title)
-            if subtitle_text:
-                draw.text((int(w * 0.05), int(h * 0.88)), subtitle_text, fill=(200, 210, 230), font=font_sub)
 
         return img
 
@@ -158,7 +142,14 @@ class RenderEngine:
         w_target, h_target = resolution
 
         if isinstance(image_input, (str, Path)):
-            base_pil = Image.open(image_input).convert("RGB")
+            if str(image_input).startswith(("http://", "https://")):
+                import requests
+                from io import BytesIO
+                response = requests.get(str(image_input), timeout=30)
+                response.raise_for_status()
+                base_pil = Image.open(BytesIO(response.content)).convert("RGB")
+            else:
+                base_pil = Image.open(image_input).convert("RGB")
         elif isinstance(image_input, Image.Image):
             base_pil = image_input.convert("RGB")
         else:
@@ -213,7 +204,7 @@ class RenderEngine:
         audio_path=None,
         output_path="output_render.mp4",
         aspect_ratio="16:9",
-        bpm_sync=True,
+        bpm_sync=False,
     ):
         """
         Assembles multiple keyframe shots into a finished video sequence,
@@ -232,13 +223,15 @@ class RenderEngine:
         logger.info(f"Starting Sequence Render for {total_shots} shot(s) (Target: {w_target}x{h_target} @ {self.fps}fps)...")
 
         total_duration = sum(s.get("duration", 4.0) for s in shots)
-        beat_markers = self.detect_beats(audio_path, target_duration=total_duration) if bpm_sync else []
+        beat_markers = self.detect_beats(audio_path, target_duration=total_duration) if bpm_sync and audio_path and os.path.exists(audio_path) else []
 
         durations = []
         if len(beat_markers) >= total_shots + 1:
             for i in range(total_shots):
                 dur = beat_markers[i + 1] - beat_markers[i]
-                durations.append(max(1.0, round(dur, 2)))
+                durations.append(max(0.1, dur))
+            scale = total_duration / sum(durations)
+            durations = [d * scale for d in durations]
         else:
             durations = [shot.get("duration", 4.0) for shot in shots]
 
@@ -250,13 +243,11 @@ class RenderEngine:
             shot_title = shot.get("title") or f"SHOT {idx+1:02d}"
             shot_prompt = shot.get("prompt", "")
             duration = durations[idx] if idx < len(durations) else 4.0
-            motion_mode = motion_modes[idx % len(motion_modes)]
+            motion_mode = shot.get("motion", motion_modes[idx % len(motion_modes)])
 
             logger.info(f"Rendering Shot {idx+1}/{total_shots}: '{shot_title}' ({duration:.2f}s, Motion: {motion_mode})...")
 
             overlays_config = {
-                "title_text": shot_title,
-                "subtitle_text": shot_prompt[:60] + "..." if len(shot_prompt) > 60 else shot_prompt,
                 "add_vignette": True,
                 "add_film_grain": True,
                 "add_letterbox": True,
@@ -284,21 +275,21 @@ class RenderEngine:
                 logger.warning(f"Failed to attach audio track: {err}")
 
         logger.info(f"Writing MP4 Video File to '{output_path}'...")
-        final_video.write_videofile(
-            str(output_path),
-            fps=self.fps,
-            codec="libx264",
-            audio_codec="aac",
-            logger=None,
-        )
-
-        logger.info(f"Render Complete! Output saved to: {output_path}")
-        return {
-            "success": True,
-            "output_path": str(output_path),
-            "duration": final_video.duration,
-            "resolution": f"{w_target}x{h_target}",
-        }
+        try:
+            final_video.write_videofile(
+                str(output_path), fps=self.fps, codec="libx264", audio_codec="aac", logger=None,
+            )
+            logger.info(f"Render Complete! Output saved to: {output_path}")
+            return {
+                "success": True, "output_path": str(output_path), "duration": final_video.duration,
+                "resolution": f"{w_target}x{h_target}",
+            }
+        finally:
+            final_video.close()
+            for clip in video_clips:
+                clip.close()
+            if audio_path and 'audio_clip' in locals():
+                audio_clip.close()
 
     def _parse_aspect_ratio(self, ratio_str):
         if ratio_str == "9:16":

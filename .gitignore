@@ -5,3 +5,14 @@ generated_assets/
 *.mp4
 node_modules/
 temp/
+
+.repair-backups/
+scratch/
+.pytest_cache/
+*.log
+.env.*
+!.env.example
+*.safetensors
+*.ckpt
+*.pth
+*.pt

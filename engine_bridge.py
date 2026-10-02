@@ -11,11 +11,14 @@ import argparse
 from pathlib import Path
 from omnirouter import OmniRouter
 from render_engine import RenderEngine
+from headless_orchestrator import HeadlessStudioOrchestrator
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Open Drama Engine Bridge")
-    parser.add_argument("--action", choices=["status", "generate_shot", "generate_script", "render_sequence"], required=True)
+    parser.add_argument("--action", choices=["status", "generate_shot", "generate_script", "refine_shot", "render_sequence", "render_timeline", "orchestrate"], required=True)
     parser.add_argument("--payload", type=str, help="JSON payload string or file path")
     parser.add_argument("--out", type=str, help="Output MP4 or image file path")
 
@@ -31,7 +34,9 @@ def main():
     payload = {}
     if args.payload:
         try:
-            if Path(args.payload).exists():
+            if args.payload.lstrip().startswith(("{", "[")):
+                payload = json.loads(args.payload)
+            elif Path(args.payload).exists():
                 with open(args.payload, "r", encoding="utf-8") as f:
                     payload = json.load(f)
             else:
@@ -40,7 +45,36 @@ def main():
             print(json.dumps({"error": f"Failed to parse payload: {err}"}))
             sys.exit(1)
 
-    if args.action == "generate_script":
+    if args.action in ("generate_shot", "render_sequence", "render_timeline"):
+        print(json.dumps({"error": "Independent shot/timeline generation cannot enforce project continuity. Use orchestrate, which verifies canon, visual identity, and every frame handoff."}))
+        sys.exit(1)
+
+    if args.action == "render_timeline":
+        from timeline_render import render_timeline
+        print(json.dumps(render_timeline(payload, args.out or "timeline_output.mp4")))
+
+    elif args.action == "orchestrate":
+        topic = payload.get("topic", "Cybernetic Cat Hero Escaping Surveillance Drone in Neon Alley")
+        genre = payload.get("genre", "2D Cartoon Action")
+        duration = payload.get("duration", 300)
+        aspect_ratio = payload.get("aspectRatio", "16:9")
+        privacy_mode = payload.get("privacyMode", False)
+        output_path = args.out or payload.get("outputPath") or "headless_sequence_output.mp4"
+
+        orchestrator = HeadlessStudioOrchestrator()
+        result = orchestrator.orchestrate_film(
+            topic=topic,
+            genre=genre,
+            duration=duration,
+            aspect_ratio=aspect_ratio,
+            privacy_mode=privacy_mode,
+            output_path=output_path,
+            character_anchor=payload.get("characterAnchor", ""),
+            provider=payload.get("provider", "auto"),
+        )
+        print(json.dumps(result))
+
+    elif args.action == "generate_script":
         topic = payload.get("topic", "Cybernetic cat hero action scene")
         genre = payload.get("genre", "2D Cartoon Action")
         target_duration = payload.get("targetDuration", 30)
@@ -49,6 +83,22 @@ def main():
             topic=topic,
             genre=genre,
             target_duration=target_duration,
+        )
+        print(json.dumps(result))
+
+    elif args.action == "refine_shot":
+        shot_id = payload.get("shotId", 1)
+        original_prompt = payload.get("originalPrompt", "")
+        tweak_instruction = payload.get("tweakInstruction", "")
+        topic = payload.get("topic", "General")
+        genre = payload.get("genre", "2D Cartoon Action")
+
+        result = router.refine_shot(
+            shot_id=shot_id,
+            original_prompt=original_prompt,
+            tweak_instruction=tweak_instruction,
+            topic=topic,
+            genre=genre
         )
         print(json.dumps(result))
 
