@@ -1,5 +1,7 @@
 # Open Drama Engine — continuity-checked story studio
 
+![Open Drama Engine studio interface — piano-black panels with brass highlights](docs/images/studio-ui.png)
+
 The dashboard and headless entry point share one durable pipeline for narrated,
 illustrated stories from 12 seconds to 25 minutes. This is not full character
 animation or lip sync. Motion and independent shot/timeline generation are blocked
