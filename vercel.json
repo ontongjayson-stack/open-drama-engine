@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "app": {
+      "root": ".",
+      "framework": "fastapi"
+    },
+    "skyreels-v2-main": {
+      "root": "SkyReels-V2-main",
+      "runtime": "python"
+    },
+    "skycaptioner_v1": {
+      "root": "SkyReels-V2-main/skycaptioner_v1",
+      "runtime": "python"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "app"
+      }
+    }
+  ]
+}
