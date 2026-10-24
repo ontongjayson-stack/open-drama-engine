@@ -2,6 +2,7 @@
 # application, snapshots, test fixtures, or the separate GPU model repository.
 .env
 .env.*
+/setup_env.py
 /OPEN-DRAMA-ENGINE_RestorePoint_Milestone2_Passed.zip
 /SkyReels-V2-main/
 /generated_assets/
