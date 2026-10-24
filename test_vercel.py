@@ -1,6 +1,7 @@
 """Smoke tests for the read-only, web-only Vercel deployment."""
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -15,6 +16,24 @@ def test_vercel_uses_one_fastapi_entrypoint():
     assert "services" not in config
     assert "rewrites" not in config
     assert (ROOT / "app.py").exists()
+
+    function = config["functions"]["app.py"]
+    for asset in ("templates/**", "static/**", "ode_icon.ico"):
+        assert asset in function["includeFiles"]
+    assert "index.html" not in function["excludeFiles"].strip("{}").split(",")
+
+
+def test_vercel_ignore_preserves_the_dashboard_template():
+    """The Vercel upload ignore file uses Git-style filename matching."""
+    command = ["git", "-c", f"core.excludesfile={ROOT / '.vercelignore'}", "check-ignore", "--no-index", "-v"]
+    required = ["app.py", "requirements.txt", "templates/index.html", "static/obsidian-studio.css", "static/manifest.json", "static/icons/icon-192.png", "ode_icon.ico"]
+    result = subprocess.run(command + required, cwd=ROOT, capture_output=True, text=True)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    # The old frontend entrypoint at the repository root must still be excluded.
+    root_index = subprocess.run(command + ["index.html"], cwd=ROOT, capture_output=True, text=True)
+    assert root_index.returncode == 0, root_index.stderr
+    assert ".vercelignore" in root_index.stdout
 
 
 def test_hosted_dashboard_works_without_writing_to_source_or_starting_jobs(monkeypatch):

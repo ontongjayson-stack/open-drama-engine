@@ -2,23 +2,25 @@
 # application, snapshots, test fixtures, or the separate GPU model repository.
 .env
 .env.*
-OPEN-DRAMA-ENGINE_RestorePoint_Milestone2_Passed.zip
-SkyReels-V2-main/
-generated_assets/
-temp/
-exports/
-docs/
-src/
-tests/
+/OPEN-DRAMA-ENGINE_RestorePoint_Milestone2_Passed.zip
+/SkyReels-V2-main/
+/generated_assets/
+/temp/
+/exports/
+/docs/
+/src/
+/tests/
 test_*.py
-scifi_city_preview.jpg
-index.html
-index.css
-engine.js
-server.js
-main.js
-render-worker.js
-package.json
-package-lock.json
+/scifi_city_preview.jpg
+# These are root-only legacy/desktop files. A bare index.html would also
+# exclude templates/index.html, which the FastAPI dashboard serves at /.
+/index.html
+/index.css
+/engine.js
+/server.js
+/main.js
+/render-worker.js
+/package.json
+/package-lock.json
 *.bat
 *.vbs
