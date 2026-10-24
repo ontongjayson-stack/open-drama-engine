@@ -1,25 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "services": {
-    "app": {
-      "root": ".",
-      "framework": "fastapi"
-    },
-    "skyreels-v2-main": {
-      "root": "SkyReels-V2-main",
-      "runtime": "python"
-    },
-    "skycaptioner_v1": {
-      "root": "SkyReels-V2-main/skycaptioner_v1",
-      "runtime": "python"
+  "framework": "fastapi",
+  "functions": {
+    "app.py": {
+      "excludeFiles": "{OPEN-DRAMA-ENGINE_RestorePoint_Milestone2_Passed.zip,SkyReels-V2-main/**,generated_assets/**,temp/**,exports/**,src/**,tests/**,test_*.py,docs/**,scifi_city_preview.jpg,index.html,index.css,engine.js,server.js,main.js,render-worker.js,package*.json}"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": {
-        "service": "app"
-      }
-    }
-  ]
+  }
 }

@@ -9,7 +9,8 @@ because those routes cannot enforce project character and frame continuity.
 
 ## Required setup
 
-Use the existing Python environment, installed dependencies in requirements.txt,
+For full local production, install `pip install -r requirements-local.txt` (the
+smaller `requirements.txt` is the Vercel/web dependency set). You also need
 FFmpeg/FFprobe on PATH, Windows SAPI narration, and local ComfyUI with a working
 SD 1.5 checkpoint. Keep credentials in .env beside app.py:
 
@@ -30,8 +31,28 @@ authorization and ALLOW_OPENROUTER_VISION=1. It is disabled by default.
 Text and images use the existing configured generation services and their quotas.
 No request is sent to api.typesafe.ai. Any TYPESAFE_API_KEY in .env is unused.
 
-Run python -B app.py, open http://127.0.0.1:7860, or use npm start for Electron.
+Run `python -B app.py`, open http://127.0.0.1:7860, or use `npm start` for Electron.
 The dashboard shows continuity review status and rejects unchecked production.
+
+## Vercel (studio preview)
+
+Import this repository into Vercel with the project root set to `.`. The
+`vercel.json` selects the FastAPI framework; Vercel loads `app:app` from the
+root `app.py` and serves the dashboard at `/`. `/api/status`, `/api/styles`,
+`/static/*`, `/manifest.json`, and `/sw.js` are available as well. Do not use
+the old multi-service configuration: the SkyReels folders are local GPU/model
+code, not deployable HTTP services. The `.vercelignore` file keeps those folders,
+the desktop application, tests and the large restore archive out of the build.
+The preview requires no API keys; set production secrets only on a real render
+worker, not in a public `.env` file.
+
+**This is a web preview, not a rendering worker.** Vercel Functions cannot use
+the app's local ComfyUI GPU or Windows SAPI voice, and background threads,
+local files and video jobs do not provide durable multi-request storage. The
+hosted dashboard disables rendering and the production/job/desktop-install APIs
+return HTTP 503 with an explanation. To render and download a film, run the
+local/desktop setup above. A fully hosted render workflow would require an
+external GPU worker, narration service and durable object/job storage.
 
 ## Continuity rules
 
