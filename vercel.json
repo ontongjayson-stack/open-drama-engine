@@ -4,7 +4,7 @@
   "functions": {
     "app.py": {
       "includeFiles": "{templates/**,static/**,ode_icon.ico}",
-      "excludeFiles": "{OPEN-DRAMA-ENGINE_RestorePoint_Milestone2_Passed.zip,SkyReels-V2-main/**,generated_assets/**,temp/**,exports/**,src/**,tests/**,test_*.py,docs/**,scifi_city_preview.jpg,index.css,engine.js,server.js,main.js,render-worker.js,package*.json}"
+      "excludeFiles": "{OPEN-DRAMA-ENGINE_RestorePoint_Milestone2_Passed.zip,SkyReels-V2-main/**,generated_assets/**,temp/**,exports/**,src/**,tests/**,test_*.py,setup_env.py,docs/**,scifi_city_preview.jpg,index.css,engine.js,server.js,main.js,render-worker.js,package*.json}"
     }
   }
 }

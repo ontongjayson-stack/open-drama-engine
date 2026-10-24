@@ -20,7 +20,9 @@ def test_vercel_uses_one_fastapi_entrypoint():
     function = config["functions"]["app.py"]
     for asset in ("templates/**", "static/**", "ode_icon.ico"):
         assert asset in function["includeFiles"]
-    assert "index.html" not in function["excludeFiles"].strip("{}").split(",")
+    excluded = function["excludeFiles"].strip("{}").split(",")
+    assert "index.html" not in excluded
+    assert "setup_env.py" in excluded
 
 
 def test_vercel_ignore_preserves_the_dashboard_template():
@@ -34,6 +36,13 @@ def test_vercel_ignore_preserves_the_dashboard_template():
     root_index = subprocess.run(command + ["index.html"], cwd=ROOT, capture_output=True, text=True)
     assert root_index.returncode == 0, root_index.stderr
     assert ".vercelignore" in root_index.stdout
+
+    # The real credentials file and its setup helper must not ship to Vercel.
+    ignore_lines = (ROOT / ".vercelignore").read_text(encoding="utf-8").splitlines()
+    assert ".env" in ignore_lines
+    assert ".env.*" in ignore_lines
+    ignored = subprocess.run(command + [".env", "setup_env.py"], cwd=ROOT, capture_output=True, text=True)
+    assert ignored.returncode == 0, ignored.stdout + ignored.stderr
 
 
 def test_hosted_dashboard_works_without_writing_to_source_or_starting_jobs(monkeypatch):
