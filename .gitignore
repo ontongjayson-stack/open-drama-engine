@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
+.venv/
+.vercel/
 .env
 generated_assets/
 *.mp4

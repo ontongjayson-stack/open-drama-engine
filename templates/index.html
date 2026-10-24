@@ -733,6 +733,17 @@
       border-color: var(--text-muted);
     }
 
+    .hosted-notice {
+      display: none;
+      margin-bottom: 18px;
+      padding: 16px 20px;
+      border: 1px solid var(--accent-gold);
+      border-radius: var(--radius-md);
+      background: rgba(245, 166, 35, 0.09);
+      color: var(--text-main);
+    }
+    .hosted-notice strong { color: var(--accent-gold); }
+
     @media (max-width: 1280px) {
       .agents-grid { grid-template-columns: repeat(3, 1fr); }
       .studio-workspace { grid-template-columns: 1fr; }
@@ -806,6 +817,11 @@
       <div><div class="eyebrow">Open Drama / Creator workspace</div><h1>Create your next story.</h1><p>Build a narrated story, scene by scene.</p></div>
       <div class="finish-signature" aria-label="Obsidian studio finish"></div>
     </section>
+
+    <div class="hosted-notice" id="hosted-notice" role="status">
+      <strong>Vercel studio preview · rendering is local-only</strong>
+      <span id="hosted-notice-message"></span>
+    </div>
 
     <!-- 6 AI AGENTS ORCHESTRATION PIPELINE -->
     <section class="agents-stage-section">
@@ -1038,7 +1054,7 @@
           <div class="video-empty-state" id="video-empty-placeholder">
             <div class="video-empty-icon">🎞️</div>
             <div style="font-weight: 700; color: var(--text-main);">No Video Rendered Yet</div>
-            <div style="font-size: 0.85rem; max-width: 320px;">Pick a style, type your story idea, and click "Launch AI Production" to generate your film.</div>
+            <div id="video-empty-description" style="font-size: 0.85rem; max-width: 320px;">Pick a style, type your story idea, and click "Launch AI Production" to generate your film.</div>
           </div>
 
           <!-- Cloud / Local Video Rendering State Overlay -->
@@ -1075,7 +1091,7 @@
           </div>
           <div class="console-box" id="console-box">
             <div class="log-entry info">[ODE System] Open Drama Engine AI Studio Pro initialized.</div>
-            <div class="log-entry info">[ODE System] OpenRouter Free tier and ComfyUI AnimateDiff ready.</div>
+            <div class="log-entry info">[ODE System] Checking production engines and available providers...</div>
           </div>
         </div>
 
@@ -1099,6 +1115,7 @@
     let currentSelectedStyle = "Anime";
     let activeJobId = null;
     let isGenerating = false;
+    let productionAvailable = true;
 
     // 15 Style Presets Array
     const STYLES_DATA = [
@@ -1226,6 +1243,26 @@
         const res = await fetch("/api/status");
         if (res.ok) {
           const data = await res.json();
+          if (data.production_available === false) {
+            productionAvailable = false;
+            document.getElementById("hosted-notice-message").textContent = data.production_message;
+            document.getElementById("hosted-notice").style.display = "block";
+            document.getElementById("backend-status-text").textContent = "BACKEND: VERCEL";
+            document.getElementById("review-status-text").textContent = "CONTINUITY: LOCAL ONLY";
+            document.getElementById("review-status-text").style.color = "var(--accent-gold)";
+            document.getElementById("comfy-status-text").textContent = "COMFYUI: LOCAL ONLY";
+            document.getElementById("gemini-status-text").textContent = "GEMINI: LOCAL ONLY";
+            document.getElementById("cloud-video-status-text").textContent = "VIDEO: LOCAL ONLY";
+            document.getElementById("btn-boot-comfy").style.display = "none";
+            document.getElementById("btn-install-desktop").style.display = "none";
+            document.getElementById("btn-generate").disabled = true;
+            document.getElementById("btn-generate-text").textContent = "RENDER LOCALLY";
+            document.getElementById("btn-resume").style.display = "none";
+            document.getElementById("progress-status-text").textContent = "Web preview only · render locally";
+            document.getElementById("video-empty-description").textContent = "Preview the studio here. Run the desktop/local app to render and download a film.";
+            addLog(`[Hosted preview] ${data.production_message}`, "info");
+            return;
+          }
           const comfyOnline = data.comfyui_online;
           const comfyDot = document.getElementById("comfy-dot");
           const comfyText = document.getElementById("comfy-status-text");
@@ -1278,6 +1315,7 @@
     }
 
     async function bootComfyUI() {
+      if (!productionAvailable) return;
       const bootBtn = document.getElementById("btn-boot-comfy");
       if (bootBtn) {
         bootBtn.disabled = true;
@@ -1287,6 +1325,7 @@
       try {
         const res = await fetch("/api/start-comfy", { method: "POST" });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || data.message || "GPU engine unavailable");
         addLog(`[ComfyUI] ${data.message}`, "success");
         // Poll status every 3s
         let attempts = 0;
@@ -1314,7 +1353,7 @@
 
     // Launch End-to-End Production
     async function launchProduction() {
-      if (isGenerating) return;
+      if (!productionAvailable || isGenerating) return;
 
       const prompt = document.getElementById("story-prompt").value.trim();
       if (!prompt) {
@@ -1471,6 +1510,7 @@
     }
 
     async function resumeLastStory() {
+      if (!productionAvailable) return;
       const id = activeJobId || localStorage.getItem("ode-last-job");
       if (!id) return;
       try {
@@ -1486,6 +1526,7 @@
     }
 
     async function restoreLastStory() {
+      if (!productionAvailable) return;
       const id = localStorage.getItem("ode-last-job");
       if (!id) return;
       try {
@@ -1534,8 +1575,8 @@
       const btn = document.getElementById("btn-generate");
       const btnText = document.getElementById("btn-generate-text");
       const btnIcon = document.getElementById("btn-generate-icon");
-      btn.disabled = false;
-      btnText.textContent = "LAUNCH AI PRODUCTION";
+      btn.disabled = !productionAvailable;
+      btnText.textContent = productionAvailable ? "LAUNCH AI PRODUCTION" : "RENDER LOCALLY";
       btnIcon.textContent = "🎬";
       document.getElementById("active-engine-badge").textContent = success ? "PRODUCTION COMPLETE" : "IDLE / RETRY";
 
@@ -1557,12 +1598,13 @@
       e.preventDefault();
       deferredPwaPrompt = e;
       const installBtn = document.getElementById("btn-install-desktop");
-      if (installBtn) {
+      if (installBtn && productionAvailable) {
         installBtn.style.display = "inline-flex";
       }
     });
 
     async function handleInstallDesktop() {
+      if (!productionAvailable) return;
       const installBtnText = document.getElementById("install-btn-text");
       const originalText = installBtnText ? installBtnText.textContent : "📲 INSTALL APP";
       if (installBtnText) installBtnText.textContent = "⏳ INSTALLING...";
@@ -1592,7 +1634,7 @@
           if (installBtnText) installBtnText.textContent = "✅ ON DESKTOP";
           alert("Open Drama Engine Desktop Application installed!\n\nA dedicated shortcut 'Open Drama Engine' has been placed on your Desktop.\n\nLaunching it will auto-start the background server and open the app window.");
         } else {
-          addLog(`[Desktop App Error] ${data.message}`, "error");
+          addLog(`[Desktop App Error] ${data.message || data.detail || "Install unavailable"}`, "error");
           if (installBtnText) installBtnText.textContent = "❌ RETRY";
           setTimeout(() => { if (installBtnText) installBtnText.textContent = originalText; }, 3000);
         }

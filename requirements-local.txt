@@ -1,0 +1,7 @@
+# Local desktop, cloud-video and legacy MoviePy render dependencies (not deployed on Vercel).
+-r requirements.txt
+numpy>=1.26,<3
+moviepy>=2.2,<3
+librosa>=0.10,<1
+gradio-client>=2,<3
+google-genai>=1,<3

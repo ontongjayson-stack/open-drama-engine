@@ -259,14 +259,14 @@ class OmniRouter:
             "fal": os.getenv("FAL_KEY") or os.getenv("FAL_API_KEY"),
         }
 
-    def get_provider_status(self):
-        """Returns availability status for all integrated providers."""
+    def get_provider_status(self, check_local=True):
+        """Returns availability status without probing a local GPU from hosted runtimes."""
         self._refresh_keys()
         return {
             "continuity_review": {"configured": bool(self.keys["openrouter"] or self.keys["gemini"]), "type": "Skill-guided review using existing generation models"},
             "gemini": {"configured": bool(self.keys["gemini"]), "type": "Gemini writer and visual identity observer"},
             "openrouter_free": {"configured": bool(self.keys["openrouter"]), "type": "OpenRouter free-model screenplay writer"},
-            "comfyui": {"configured": self._check_comfyui_online(), "type": "Local ComfyUI Server (127.0.0.1:8188 - 6GB VRAM)"},
+            "comfyui": {"configured": check_local and self._check_comfyui_online(), "type": "Local ComfyUI Server (127.0.0.1:8188 - 6GB VRAM)"},
             "styles_count": len(STYLE_PRESETS)
         }
 

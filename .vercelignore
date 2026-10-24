@@ -1,0 +1,24 @@
+# Deploy only the FastAPI studio and its template/static assets, not the desktop
+# application, snapshots, test fixtures, or the separate GPU model repository.
+.env
+.env.*
+OPEN-DRAMA-ENGINE_RestorePoint_Milestone2_Passed.zip
+SkyReels-V2-main/
+generated_assets/
+temp/
+exports/
+docs/
+src/
+tests/
+test_*.py
+scifi_city_preview.jpg
+index.html
+index.css
+engine.js
+server.js
+main.js
+render-worker.js
+package.json
+package-lock.json
+*.bat
+*.vbs
