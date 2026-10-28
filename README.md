@@ -9,9 +9,20 @@ because those routes cannot enforce project character and frame continuity.
 
 ## Required setup
 
-Use the existing Python environment, installed dependencies in requirements.txt,
+For full local production, install `pip install -r requirements-local.txt` (the
+smaller `requirements.txt` is the Vercel/web dependency set). You also need
 FFmpeg/FFprobe on PATH, Windows SAPI narration, and local ComfyUI with a working
-SD 1.5 checkpoint. Keep credentials in .env beside app.py:
+SD 1.5 checkpoint. Create an actual, private `.env` beside `app.py` in one
+step, then edit it with your own keys and local ComfyUI location:
+
+```bash
+python setup_env.py
+```
+
+The command copies `.env.example` to `.env` with private file permissions and
+**never overwrites an existing `.env`**. Git and Vercel exclude `.env`, so it
+cannot be populated by editing GitHub; run the command separately on each local
+machine. Do not commit credentials. Set at least one of these keys in `.env`:
 
 - OPENROUTER_API_KEY or GEMINI_API_KEY: screenplay generation.
 - Visual checks use Gemini, with an existing OpenRouter vision model as fallback.
@@ -30,8 +41,39 @@ authorization and ALLOW_OPENROUTER_VISION=1. It is disabled by default.
 Text and images use the existing configured generation services and their quotas.
 No request is sent to api.typesafe.ai. Any TYPESAFE_API_KEY in .env is unused.
 
-Run python -B app.py, open http://127.0.0.1:7860, or use npm start for Electron.
+Run `python -B app.py`, open http://127.0.0.1:7860, or use `npm start` for Electron.
 The dashboard shows continuity review status and rejects unchecked production.
+
+## Vercel (studio preview)
+
+Import this repository into Vercel with the project root set to `.`. The
+`vercel.json` selects the FastAPI framework; Vercel loads `app:app` from the
+root `app.py` and serves the dashboard at `/`. `/api/status`, `/api/styles`,
+`/static/*`, `/manifest.json`, and `/sw.js` are available as well. Do not use
+the old multi-service configuration: the SkyReels folders are local GPU/model
+code, not deployable HTTP services. The `.vercelignore` file keeps those folders,
+the desktop application, tests and the large restore archive out of the build.
+The preview requires no API keys. The local `.env` is **not** deployed or
+synced to Vercel. If you want to prepare environment variables for this preview,
+open your own Vercel project → **Settings → Environment Variables** and add
+`GEMINI_API_KEY` or `OPENROUTER_API_KEY` as a sensitive variable for the desired
+targets (Production / Preview). Edit its value there and redeploy to apply
+changes. Use your own account; never put a real key in `vercel.json`, GitHub, or
+an API request to this public site. These keys are optional for the preview and
+**do not enable the Generate button**; the deployed site already reports Gemini
+configured if the key is present. Do not set `COMFYUI_BASE_URL` to `localhost`
+or add Windows-only `COMFYUI_DIR` on Vercel: those settings are for your local
+rendering machine. Do not manually set `VERCEL=1` in local `.env`, as it switches
+the app to preview-only mode. If direct project access is unavailable, someone
+with access to the correct Vercel team must add/edit variables in that project.
+
+**This is a web preview, not a rendering worker.** Vercel Functions cannot use
+the app's local ComfyUI GPU or Windows SAPI voice, and background threads,
+local files and video jobs do not provide durable multi-request storage. The
+hosted dashboard disables rendering and the production/job/desktop-install APIs
+return HTTP 503 with an explanation. To render and download a film, run the
+local/desktop setup above. A fully hosted render workflow would require an
+external GPU worker, narration service and durable object/job storage.
 
 ## Continuity rules
 

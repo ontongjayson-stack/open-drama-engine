@@ -10,6 +10,7 @@ import asyncio
 import logging
 import threading
 import subprocess
+import tempfile
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -30,16 +31,27 @@ logging.basicConfig(level=logging.INFO, format="[AppServer] %(asctime)s - %(leve
 logger = logging.getLogger("AppServer")
 
 BASE_DIR = Path(__file__).resolve().parent
+IS_VERCEL = os.getenv("VERCEL") == "1"
 TEMPLATES_DIR = BASE_DIR / "templates"
-ASSETS_DIR = BASE_DIR / "generated_assets"
 STATIC_DIR = BASE_DIR / "static"
+# Vercel's source tree is read-only and /tmp is ephemeral. Never create jobs there:
+# the hosted dashboard explicitly rejects rendering until a durable worker exists.
+ASSETS_DIR = (
+    Path(tempfile.gettempdir()) / "open-drama-engine" / "generated_assets"
+    if IS_VERCEL else BASE_DIR / "generated_assets"
+)
 COMFY_OUTPUT_DIR = Path(r"D:\AI DEVELOPMENTS\ComfyUI\output")
 COMFY_URL = os.getenv("COMFYUI_BASE_URL", "http://127.0.0.1:8188").rstrip("/")
+HOSTED_LIMITATION = (
+    "Vercel hosts the studio preview only. Story rendering needs local ComfyUI, "
+    "Windows SAPI narration, FFmpeg and durable job storage. Run the desktop/local "
+    "app to generate and download films."
+)
 
-# Ensure directories exist
-TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
-ASSETS_DIR.mkdir(parents=True, exist_ok=True)
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
+if not IS_VERCEL:
+    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="Open Drama Engine — AI Studio Pro", version="2.0")
 
@@ -51,15 +63,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static asset folders
-app.mount("/generated_assets", StaticFiles(directory=str(ASSETS_DIR)), name="generated_assets")
+# Generated video files are only served by the persistent local backend.
+if not IS_VERCEL:
+    app.mount("/generated_assets", StaticFiles(directory=str(ASSETS_DIR)), name="generated_assets")
 if TEMPLATES_DIR.exists():
     app.mount("/templates", StaticFiles(directory=str(TEMPLATES_DIR)), name="templates")
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-router = OmniRouter(workspace_dir=str(BASE_DIR))
+router = OmniRouter(workspace_dir=str(ASSETS_DIR.parent if IS_VERCEL else BASE_DIR))
 cloud_video = CloudVideoRouter()
+
+
+def require_local_runtime():
+    """Do not report a successful job on an ephemeral, GPU-less function."""
+    if IS_VERCEL:
+        raise HTTPException(status_code=503, detail=HOSTED_LIMITATION)
+
 
 # In-memory store for real-time progress streaming
 job_states = {}
@@ -203,6 +223,7 @@ class ProductionRequest(BaseModel):
 
 
 def dispatch_production(job_id, settings):
+    require_local_runtime()
     if not production_lock.acquire(blocking=False):
         raise HTTPException(409, "A story is already rendering. Wait for it to finish before starting another.")
     try:
@@ -240,13 +261,16 @@ async def serve_dashboard():
 @app.get("/api/status")
 async def get_system_status():
     """Returns server telemetry: ComfyUI, Gemini, OpenRouter, Cloud Video, and visual style presets."""
-    comfy_online = (check_comfy_status() != -1)
-    provider_info = router.get_provider_status()
+    comfy_online = not IS_VERCEL and check_comfy_status() != -1
+    provider_info = router.get_provider_status(check_local=not IS_VERCEL)
     return {
         "status": "online",
+        "runtime": "vercel" if IS_VERCEL else "local",
+        "production_available": not IS_VERCEL,
+        "production_message": HOSTED_LIMITATION if IS_VERCEL else None,
         "comfyui_online": comfy_online,
-        "cloud_video_available": cloud_video.is_available(),
-        "continuity_review_enabled": True,
+        "cloud_video_available": not IS_VERCEL and cloud_video.is_available(),
+        "continuity_review_enabled": not IS_VERCEL,
         "gemini_configured": provider_info.get("gemini", {}).get("configured", False),
         "openrouter_configured": provider_info.get("openrouter_free", {}).get("configured", False),
         "providers": provider_info,
@@ -263,6 +287,7 @@ async def get_styles():
 @app.post("/api/start-comfy")
 async def start_comfy_server():
     """Boots local ComfyUI GPU engine in background if not already active."""
+    require_local_runtime()
     if check_comfy_status() != -1:
         return {"status": "already_running", "message": "ComfyUI is already active on http://127.0.0.1:8188"}
 
@@ -278,6 +303,7 @@ async def start_comfy_server():
 
 @app.post("/api/generate")
 async def start_generation(body: ProductionRequest):
+    require_local_runtime()
     if body.production_mode == "motion":
         raise HTTPException(422, "Motion providers cannot yet enforce your identity and frame continuity requirements. Choose the checked illustrated story format.")
     return dispatch_production(uuid.uuid4().hex[:12], body.model_dump())
@@ -285,6 +311,7 @@ async def start_generation(body: ProductionRequest):
 
 @app.get("/api/jobs/{job_id}")
 async def get_job(job_id: str):
+    require_local_runtime()
     if not re.fullmatch(r"[a-f0-9]{12}", job_id):
         raise HTTPException(404, "Story job not found.")
     with job_locks:
@@ -301,6 +328,7 @@ async def get_job(job_id: str):
 
 @app.post("/api/jobs/{job_id}/resume")
 async def resume_job(job_id: str):
+    require_local_runtime()
     state = await get_job(job_id)
     if state.get("done"):
         raise HTTPException(409, "This story is already complete.")
@@ -311,6 +339,7 @@ async def resume_job(job_id: str):
 
 @app.get("/api/stream/{job_id}")
 async def stream_job_progress(job_id: str, request: Request):
+    require_local_runtime()
     initial_state = await get_job(job_id)
     queue = asyncio.Queue()
     subscriber = (queue, asyncio.get_running_loop())
@@ -374,6 +403,7 @@ async def get_favicon():
 @app.post("/api/install-desktop")
 async def api_install_desktop():
     """Installs or updates the Open Drama Engine standalone desktop application shortcut."""
+    require_local_runtime()
     try:
         from install_desktop_app import install_desktop_shortcut
         success, path_or_err = install_desktop_shortcut()
